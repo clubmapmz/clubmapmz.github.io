@@ -1007,7 +1007,8 @@ function sheetEditarMesa(id){
     </div>
     <div class="acts">
       <button class="btn gold" onclick="actMesaGuardar('${id}')">Guardar</button>
-      <button class="btn" onclick="actMesaRodar('${id}',1)">⟳ Rodar</button>
+      <button class="btn" onclick="actMesaRodar('${id}',1)">⟳ Rodar 90°</button>
+      <button class="btn" onclick="actMesaRodar15('${id}')">⟲ Rodar 15°</button>
       <button class="btn" onclick="actMesaTamOrig('${id}')">↺ Tamanho original</button>
       <button class="btn" onclick="actMesaDuplicar('${id}')">Duplicar</button>
       <button class="btn red ghost" onclick="actMesaEliminar('${id}')">Eliminar</button>
@@ -1037,6 +1038,11 @@ function actMesaTamOrig(id){
 function actMesaRodar(id, dir){
   const m = findM(id);
   m.rot = ((m.rot||0) + (dir||1)*90 + 360) % 360;
+  sel = id; save(); render();
+}
+function actMesaRodar15(id){
+  const m = findM(id);
+  m.rot = ((m.rot||0) + 15) % 360;
   sel = id; save(); render();
 }
 function actMesaDuplicar(id){
