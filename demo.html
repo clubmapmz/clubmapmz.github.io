@@ -61,15 +61,6 @@
   .tbtn.gold{border:0; background:var(--accent); color:#FFF1E8}
   /* ---------- palco / mapa ---------- */
   #stage{flex:1; min-height:0; position:relative; overflow:auto; -webkit-overflow-scrolling:touch}
-  #zoomctl{
-    position:fixed; right:12px; bottom:14px; z-index:5; display:flex; align-items:center; gap:4px;
-    background:rgba(18,22,30,.92); border:1px solid var(--line); border-radius:999px; padding:5px 8px;
-  }
-  #zoomctl button{
-    width:40px; height:40px; border-radius:50%; border:1px solid var(--line); background:var(--branco);
-    color:var(--ink); font-size:20px; font-weight:700; cursor:pointer;
-  }
-  #zoomctl span{color:var(--ink-soft); font-size:12.5px; font-weight:700; min-width:44px; text-align:center}
   svg{display:block; margin:0 auto; touch-action:none}
   .zona rect.zr{fill:rgba(201,162,39,.05); stroke:#39424F; stroke-width:2}
   .zona rect.zi{fill:none; stroke:rgba(201,162,39,.16); stroke-width:1.5}
@@ -191,11 +182,6 @@
 </div>
 
 <main id="stage"><svg id="floor" xmlns="http://www.w3.org/2000/svg"></svg></main>
-<div id="zoomctl">
-  <button onclick="mudaZoom(-0.5)" aria-label="Afastar">−</button>
-  <span id="zoomval">100%</span>
-  <button onclick="mudaZoom(0.5)" aria-label="Aproximar">＋</button>
-</div>
 
 <div id="scrim" onclick="closeSheet()"></div>
 <aside id="sheet" role="dialog"></aside>
@@ -347,12 +333,6 @@ let mode = 'servico';
 let sel = null;
 let multiMode = false;
 const multi = new Set();
-let zoom = 1;
-function mudaZoom(d){
-  zoom = Math.min(3, Math.max(1, Math.round((zoom + d) * 10) / 10));
-  document.getElementById('zoomval').textContent = Math.round(zoom * 100) + '%';
-  render();
-}
 
 const $ = id => document.getElementById(id);
 const svg = $('floor');
@@ -635,7 +615,7 @@ function render(){
   svg.setAttribute('preserveAspectRatio','xMidYMid meet');
   /* escala: encaixa como antes até à altura base (1200); acima disso mantém o tamanho e faz scroll */
   const st = $('stage'), refH = Math.min(VB.h, 1200 + 2*PAD);
-  const s = (Math.min(st.clientWidth / VB.w, st.clientHeight / refH) || 1) * zoom;
+  const s = Math.min(st.clientWidth / VB.w, st.clientHeight / refH) || 1;
   svg.style.width = (VB.w * s) + 'px';
   svg.style.height = (VB.h * s) + 'px';
   svg.innerHTML = `
