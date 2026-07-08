@@ -1,7 +1,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Club App — Planta Baixa</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<title>ClubMap</title>
 <style>
   :root{
     --creme:#12161E; --creme-2:#1A202B; --branco:#1E2530;
@@ -1230,4 +1233,5 @@ function setMode(m){
 
 window.addEventListener('resize', render);
 render();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
