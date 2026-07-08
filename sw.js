@@ -1,6 +1,6 @@
-/* ClubMap — service worker: rede primeiro, cache como reserva (offline) */
-const CACHE = 'clubmap-v1';
-const FILES = ['./', './index.html', './manifest.json', './icon-180.png', './icon-192.png', './icon-512.png'];
+/* ClubMap v2 — service worker: rede primeiro, cache como reserva (offline) */
+const CACHE = 'clubmap-v2';
+const FILES = ['./', './manifest.json', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));
@@ -18,7 +18,7 @@ self.addEventListener('fetch', e => {
       caches.open(CACHE).then(c => c.put(e.request, cl));
       return r;
     }).catch(() =>
-      caches.match(e.request).then(r => r || caches.match('./index.html'))
+      caches.match(e.request).then(r => r || caches.match('./'))
     )
   );
 });
