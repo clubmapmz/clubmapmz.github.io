@@ -6,3 +6,10 @@ CHAVE-ASSINATURA-LEIA-ME.txt
 # local
 .claude/
 ngrok.md
+
+# internos — NUNCA publicar no site
+Proposta-*.pdf
+demo.html
+web-antiga.html
+app-3d-antiga.html
+id-project.md
