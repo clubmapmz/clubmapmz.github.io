@@ -1,0 +1,1098 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>ClubMap · Consola da Receção — DEMO</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #12161E; --bg2: #1A202B; --card: #1E2530; --panel: #1A212C;
+    --ink: #EDE6D6; --soft: #9A9080; --line: #2A3140;
+    --accent: #C9552F; --brass: #C9A227;
+    --livre: #43C98B; --res: #E5A33C; --ocu: #FF5C6C; --sel: #3EC6E0;
+  }
+  html, body { height: 100%; }
+  body { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--ink); }
+
+  .app { display: flex; height: 100vh; min-height: 720px; overflow: hidden; }
+
+  /* ---------- sidebar ---------- */
+  .side { width: 240px; background: #0E1219; border-right: 1px solid var(--line); display: flex; flex-direction: column; flex-shrink: 0; }
+  .logo { display: flex; align-items: center; gap: 12px; padding: 20px 18px 18px; border-bottom: 1px solid var(--bg2); }
+  .logo b { font-size: 17px; font-weight: 800; letter-spacing: .5px; display: block; }
+  .logo small { color: var(--soft); font-size: 10.5px; letter-spacing: .5px; }
+  .nav { padding: 14px 10px; display: flex; flex-direction: column; gap: 2px; }
+  .nav .it { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 10px; color: var(--soft); font-size: 13.5px; font-weight: 600; cursor: pointer; border-left: 3px solid transparent; user-select: none; }
+  .nav .it:hover { background: #151B24; }
+  .nav .it.on { background: var(--card); border-left-color: var(--brass); color: var(--ink); font-weight: 700; }
+  .nav .it.on svg { stroke: var(--brass); }
+  .nav svg { stroke: var(--soft); flex-shrink: 0; }
+  .user { margin: 14px; padding: 12px; background: var(--bg2); border: 1px solid var(--line); border-radius: 12px; display: flex; align-items: center; gap: 10px; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: #33270F; border: 1px solid var(--brass); display: flex; align-items: center; justify-content: center; color: var(--brass); font-weight: 800; font-size: 13px; flex-shrink: 0; }
+  .user b { font-size: 13px; display: block; }
+  .user small { color: var(--brass); font-size: 11px; font-weight: 700; }
+
+  /* ---------- layout ---------- */
+  .main { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+  .top { display: flex; align-items: center; gap: 14px; padding: 14px 96px 14px 24px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
+  .top h1 { font-size: 19px; font-weight: 800; }
+  .top .sub { color: var(--soft); font-size: 12.5px; }
+  .grow { flex: 1; }
+  .body { flex: 1; overflow: auto; padding: 18px 24px 24px; }
+
+  /* ---------- componentes ---------- */
+  .btn { border: none; border-radius: 11px; padding: 11px 18px; font: inherit; font-weight: 700; font-size: 13.5px; cursor: pointer; }
+  .btn.gold { background: var(--accent); color: #FFF1E8; }
+  .btn.ghost { background: var(--panel); color: var(--ink); border: 1px solid var(--line); }
+  .btn:hover { filter: brightness(1.12); }
+  .chip { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 700; border: 1px solid var(--line); background: var(--panel); color: var(--soft); cursor: pointer; user-select: none; }
+  .chip.on { border-color: var(--accent); background: #33221B; color: var(--ink); }
+  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 14px; margin-bottom: 14px; }
+  .kpi { background: var(--bg2); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
+  .kpi.destq { border-color: var(--brass); }
+  .kpi .lbl { color: var(--soft); font-size: 11px; font-weight: 700; letter-spacing: .8px; }
+  .kpi .val { font-size: 30px; font-weight: 800; line-height: 1.25; }
+  .kpi .val small { color: var(--soft); font-size: 14px; font-weight: 600; }
+  .kpi .foot { font-size: 12px; font-weight: 700; }
+  .card { background: var(--bg2); border: 1px solid var(--line); border-radius: 14px; }
+  .card h3 { font-size: 15px; font-weight: 800; }
+  .tbl { width: 100%; border-collapse: collapse; }
+  .tbl th { text-align: left; color: var(--soft); font-size: 10.5px; font-weight: 700; letter-spacing: .8px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  .tbl td { padding: 11px 10px; border-bottom: 1px solid var(--card); font-size: 13px; white-space: nowrap; }
+  .tbl tr:last-child td { border-bottom: none; }
+  .tbl tr.click { cursor: pointer; }
+  .tbl tr.click:hover td { background: #1E2530; }
+  .pill { display: inline-block; border-radius: 999px; padding: 5px 12px; font-weight: 800; font-size: 11px; }
+  .pill.ok { background: #143326; color: var(--livre); }
+  .pill.warn { background: #33270F; color: var(--res); }
+  .pill.bad { background: #38141B; color: var(--ocu); }
+  .tag-vip { background: #33270F; border: 1px solid var(--brass); border-radius: 999px; padding: 1px 8px; color: var(--brass); font-weight: 800; font-size: 10px; }
+  .num { width: 38px; height: 38px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; }
+  .num.l { background: #143326; color: var(--livre); }
+  .num.r { background: #33270F; color: var(--res); }
+  .num.o { background: #38141B; color: var(--ocu); }
+  .hora { color: var(--brass); font-weight: 800; }
+  input, select { background: var(--panel); border: 1px solid var(--line); border-radius: 11px; color: var(--ink); font: inherit; font-size: 14px; padding: 10px 12px; width: 100%; }
+  input::placeholder { color: var(--soft); }
+  label { display: block; color: var(--soft); font-size: 11px; font-weight: 700; letter-spacing: .8px; margin: 10px 0 4px; }
+
+  /* ---------- modal / toast / ribbon ---------- */
+  .scrim { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; z-index: 50; }
+  .scrim.open { display: flex; }
+  .modal { width: 440px; max-height: 86vh; overflow: auto; background: var(--bg); border: 1px solid var(--line); border-radius: 16px; padding: 20px; }
+  .modal h2 { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+  .modal .sub { color: var(--soft); font-size: 12.5px; margin-bottom: 8px; }
+  #toast { position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%); background: #1E2836; border: 1px solid var(--brass); color: var(--ink); padding: 11px 20px; border-radius: 999px; font-size: 13.5px; font-weight: 700; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 90; }
+  #toast.show { opacity: 1; }
+  .ribbon { position: fixed; top: 14px; right: -44px; transform: rotate(35deg); background: var(--accent); color: #FFF1E8; font-weight: 800; font-size: 12px; letter-spacing: 3px; padding: 6px 50px; z-index: 99; box-shadow: 0 2px 10px rgba(0,0,0,.5); pointer-events: none; }
+
+  .duas { display: flex; gap: 14px; align-items: flex-start; }
+  @media (max-width: 1500px) {
+    .hide-sm { display: none; }
+    .duas .dir { width: 330px; }
+  }
+  /* telemóvel: navegação no topo, colunas empilhadas, planta a caber no ecrã */
+  @media (max-width: 900px) {
+    .app { flex-direction: column; height: auto; min-height: 100vh; overflow: visible; }
+    .side { width: 100%; border-right: none; border-bottom: 1px solid var(--line); }
+    .logo { padding: 12px 14px; }
+    .nav { flex-direction: row; overflow-x: auto; padding: 6px 10px 10px; gap: 4px; }
+    .nav .it { flex-shrink: 0; border-left: none; padding: 9px 12px; white-space: nowrap; }
+    .nav .it.on { border-left: none; }
+    .user { display: none; }
+    #demoPrazo { margin: 0 14px 8px; }
+    .side > div:has(.btn) { display: none; }
+    .top { flex-wrap: wrap; padding: 12px 70px 12px 14px; gap: 10px; }
+    .body { padding: 12px 12px 20px; }
+    .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 10px; }
+    .kpi .val { font-size: 24px; }
+    .duas { flex-direction: column; }
+    .duas .dir { width: 100%; }
+    .card { overflow-x: auto; }
+    #body svg { max-width: 100%; height: auto; }
+    .modal { width: calc(100vw - 28px); }
+    .ribbon { top: 8px; right: -52px; font-size: 10px; padding: 5px 48px; }
+  }
+  .duas .esq { flex: 2; min-width: 0; overflow-x: auto; }
+  .duas .dir { width: 380px; flex-shrink: 0; }
+
+  /* timeline */
+  .tl { display: flex; gap: 12px; }
+  .tl .rail { display: flex; flex-direction: column; align-items: center; }
+  .tl .dot { width: 12px; height: 12px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+  .tl .bar { width: 2px; flex: 1; background: var(--line); }
+  .tl .txt { padding-bottom: 14px; flex: 1; }
+  .tl .txt b { font-size: 13.5px; display: block; }
+  .tl .txt small { color: var(--soft); font-size: 12px; }
+
+  /* impressão: só o relatório */
+  #printArea { display: none; }
+  @media print {
+    body * { visibility: hidden; }
+    #printArea, #printArea * { visibility: visible; }
+    #printArea { display: block; position: absolute; inset: 0; background: #fff; color: #111; padding: 24px; font-size: 13px; }
+    #printArea h1 { font-size: 20px; margin-bottom: 2px; }
+    #printArea .m { color: #555; margin-bottom: 14px; }
+    #printArea table { width: 100%; border-collapse: collapse; }
+    #printArea th, #printArea td { border-bottom: 1px solid #ccc; text-align: left; padding: 8px 6px; }
+    #printArea .tot { margin-top: 14px; font-weight: 800; font-size: 15px; text-align: right; }
+    .ribbon, #toast { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="ribbon">DEMO</div>
+<div id="toast"></div>
+
+<div class="app">
+  <!-- sidebar -->
+  <div class="side">
+    <div class="logo">
+      <svg width="38" height="38" viewBox="0 0 108 108"><rect x="4" y="4" width="100" height="100" rx="26" fill="#0E1219" stroke="#2A3140" stroke-width="2"/><circle cx="84" cy="54" r="6.5" fill="#D9CCA9"/><circle cx="54" cy="84" r="6.5" fill="#D9CCA9"/><circle cx="24" cy="54" r="6.5" fill="#D9CCA9"/><circle cx="54" cy="24" r="6.5" fill="#D9CCA9"/><circle cx="54" cy="54" r="19" fill="#C9A227"/><circle cx="54" cy="54" r="12.5" fill="#1E2836"/><circle cx="54" cy="54" r="3.6" fill="#FFD98A"/></svg>
+      <div><b>ClubMap</b><small>ARTS · CONSOLA DA CASA</small></div>
+    </div>
+    <div class="nav" id="nav">
+      <div class="it" data-v="painel"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>Painel</div>
+      <div class="it" data-v="mapa"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20l-6-3V4l6 3 6-3 6 3v13l-6-3-6 3z"/><path d="M9 7v13"/><path d="M15 4v13"/></svg>Mapa da sala</div>
+      <div class="it" data-v="reservas"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18"/><path d="M8 3v4"/><path d="M16 3v4"/></svg>Reservas</div>
+      <div class="it" data-v="clientes"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6"/><path d="M17 8h5"/><path d="M19.5 5.5v5"/></svg>Clientes</div>
+      <div class="it" data-v="caixa"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="3"/><circle cx="12" cy="12" r="3"/></svg>Caixa</div>
+      <div class="it" data-v="arquivo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9"/><path d="M10 13h4"/></svg>Histórico de noites</div>
+    </div>
+    <div class="grow"></div>
+    <div id="demoPrazo" style="margin: 0 14px 8px; text-align: center; color: var(--res); font-size: 11.5px; font-weight: 700"></div>
+    <div style="margin: 0 14px 10px"><button class="btn ghost" style="width: 100%; font-size: 12px" onclick="reporDemo()">↺ Repor dados de demonstração</button></div>
+    <div class="user"><div class="avatar">N</div><div><b>Neusa Matusse</b><small>RECEÇÃO</small></div></div>
+  </div>
+
+  <!-- conteúdo -->
+  <div class="main">
+    <div class="top" id="topbar"></div>
+    <div class="body" id="body"></div>
+  </div>
+</div>
+
+<!-- modal -->
+<div class="scrim" id="scrim" onclick="if(event.target===this) fecharModal()"><div class="modal" id="modal"></div></div>
+<div id="printArea"></div>
+
+<script>
+'use strict';
+/* ============ dados (localStorage — sem servidor; na versão final: nuvem) ============ */
+const LS = 'clubmap-demo-v3';
+const MT = v => v.toLocaleString('pt-PT', {minimumFractionDigits: 2, maximumFractionDigits: 2}).replace(/\s/g, '.') + ' MT';
+const hoje = new Date();
+const pad = n => String(n).padStart(2, '0');
+const isoHoje = hoje.getFullYear() + '-' + pad(hoje.getMonth() + 1) + '-' + pad(hoje.getDate());
+const DIAS = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+function dataPT(iso) { const d = new Date(iso + 'T12:00:00'); return DIAS[d.getDay()] + ', ' + d.getDate() + ' ' + MESES[d.getMonth()] + ' ' + d.getFullYear(); }
+
+function mesasBase() {
+  /* numeração real da casa (igual à app de produção) */
+  const m = [];
+  m.push({n: 1, zona: 'VIP Room 1', lug: 12}, {n: 2, zona: 'VIP Room 2', lug: 10});
+  [101, 103, 105, 107, 109, 111].forEach(n => m.push({n: n, zona: 'Lounge · 100', lug: 2}));
+  [201, 203, 205, 207, 209, 211].forEach(n => m.push({n: n, zona: 'Lounge · 200', lug: 2}));
+  for (let n = 301; n <= 306; n++) m.push({n: n, zona: 'Zona 300', lug: 4});
+  for (let n = 401; n <= 406; n++) m.push({n: n, zona: 'Sunset', lug: (n === 401 || n === 404) ? 6 : 4});
+  for (let n = 501; n <= 506; n++) m.push({n: n, zona: 'Sunset', lug: 4});
+  for (let n = 601; n <= 606; n++) m.push({n: n, zona: 'Sunset', lug: n === 606 ? 7 : 4});
+  [39, 40, 41].forEach(n => m.push({n: n, zona: 'Sofá em U · Lounge', lug: 5}));
+  return m.sort((a, b) => a.n - b.n);
+}
+const OCUPADAS_SEED = {406: 'Sr. Carlos Macuácua · 4 p.', 103: 'Walk-in · 2 p.', 109: 'Walk-in · 2 p.', 203: 'Walk-in · 2 p.', 209: 'Walk-in · 2 p.', 302: 'Walk-in · 4 p.', 402: 'Walk-in · 2 p.', 502: 'Walk-in · 4 p.', 601: 'Walk-in · 4 p.', 604: 'Walk-in · 3 p.'};
+
+function seed() {
+  return {
+    clientes: {
+      '845123401': {nome: 'Anifa Momade', tel: '84 512 3401', vip: true, visitas: 12, ultima: '15 Ago 2026', consumo: 185000, notas: 'Prefere o VIP Room 2 · mesa longe da coluna de som.'},
+      '827710045': {nome: 'Carlos Macuácua', tel: '82 771 0045', vip: false, visitas: 5, ultima: 'Hoje', consumo: 42500, notas: ''},
+      '852047789': {nome: 'Élio Sitoe', tel: '85 204 7789', vip: false, visitas: 3, ultima: '08 Ago 2026', consumo: 30000, notas: ''},
+      '841119020': {nome: 'Sr. Chambule', tel: '84 111 9020', vip: false, visitas: 2, ultima: '05 Ago 2026', consumo: 20000, notas: ''},
+      '849331276': {nome: 'Marta Cumbe', tel: '84 933 1276', vip: false, visitas: 1, ultima: '02 Ago 2026', consumo: 10000, notas: ''},
+    },
+    reservas: [
+      {id: 1, data: isoHoje, hora: '21:00', mesa: 305, tel: '849331276', pax: 4, valor: 10000, pago: true, pagoAs: '19:42'},
+      {id: 2, data: isoHoje, hora: '21:30', mesa: 405, tel: '852047789', pax: 4, valor: 10000, pago: true, pagoAs: '18:15'},
+      {id: 3, data: isoHoje, hora: '22:00', mesa: 2, tel: '845123401', pax: 8, valor: 10000, pago: true, pagoAs: '17:03'},
+      {id: 4, data: isoHoje, hora: '23:00', mesa: 1, tel: '841119020', pax: 10, valor: 10000, pago: false, pagoAs: ''},
+    ],
+    proxId: 5,
+    checkins: [],
+  };
+}
+let DB;
+try { DB = JSON.parse(localStorage.getItem(LS)) || seed(); } catch (e) { DB = seed(); }
+function save() { try { localStorage.setItem(LS, JSON.stringify(DB)); } catch (e) {} }
+function reporDemo() { DB = seed(); save(); render(); toast('Dados de demonstração repostos'); }
+
+/* ============ helpers ============ */
+const $ = id => document.getElementById(id);
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2600); }
+function naVersaoFinal() { toast('Disponível na versão final 😉'); }
+function cliente(tel) { return DB.clientes[tel] || {nome: '(sem ficha)', tel: tel, vip: false}; }
+function resHoje() { return DB.reservas.filter(r => r.data === isoHoje).sort((a, b) => a.hora.localeCompare(b.hora)); }
+function resFuturas() { return DB.reservas.filter(r => r.data > isoHoje).sort((a, b) => (a.data + a.hora).localeCompare(b.data + b.hora)); }
+function estadoMesa(n) {
+  if (DB.checkins.includes(n) || OCUPADAS_SEED[n]) return 'ocupada';
+  if (resHoje().some(r => r.mesa === n)) return 'reservada';
+  return 'livre';
+}
+function quemNaMesa(n) {
+  if (DB.checkins.includes(n)) { const r = resHoje().find(x => x.mesa === n); return r ? cliente(r.tel).nome + ' · ' + r.pax + ' p.' : 'Ocupada'; }
+  if (OCUPADAS_SEED[n]) return OCUPADAS_SEED[n];
+  const r = resHoje().find(x => x.mesa === n);
+  return r ? cliente(r.tel).nome : '';
+}
+function stats() {
+  const mesas = mesasBase();
+  let l = 0, r = 0, o = 0;
+  mesas.forEach(m => { const e = estadoMesa(m.n); if (e === 'livre') l++; else if (e === 'reservada') r++; else o++; });
+  const rh = resHoje();
+  const pagas = rh.filter(x => x.pago);
+  return {total: mesas.length, livres: l, resv: r, ocup: o, nRes: rh.length, nPagas: pagas.length, caixa: pagas.reduce((s, x) => s + x.valor, 0), porCobrar: rh.filter(x => !x.pago).reduce((s, x) => s + x.valor, 0)};
+}
+
+/* ============ navegação ============ */
+let vista = 'painel', filtroMesas = 'todas', pesquisaCli = '', cliSel = '845123401', arquivoAberto = false, noiteIdx = 0, periodoCaixa = 'hoje', mesasExpandido = false;
+/* a demo desativa-se sozinha a partir desta data (ajustar ao publicar: dia de publicação + 10) */
+const DEMO_EXPIRA = '2026-09-06';
+document.querySelectorAll('#nav .it').forEach(it => it.addEventListener('click', () => {
+  const v = it.dataset.v;
+  if (v.startsWith('_')) { naVersaoFinal(); return; }
+  vista = v; arquivoAberto = false; render();
+}));
+
+/* ============ render ============ */
+function render() {
+  if (isoHoje >= DEMO_EXPIRA) {
+    document.querySelector('.app').innerHTML =
+      '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:30px;text-align:center">' +
+      '<svg width="72" height="72" viewBox="0 0 108 108"><rect x="4" y="4" width="100" height="100" rx="26" fill="#0E1219" stroke="#2A3140" stroke-width="2"/><circle cx="84" cy="54" r="6.5" fill="#D9CCA9"/><circle cx="54" cy="84" r="6.5" fill="#D9CCA9"/><circle cx="24" cy="54" r="6.5" fill="#D9CCA9"/><circle cx="54" cy="24" r="6.5" fill="#D9CCA9"/><circle cx="54" cy="54" r="19" fill="#C9A227"/><circle cx="54" cy="54" r="12.5" fill="#1E2836"/><circle cx="54" cy="54" r="3.6" fill="#FFD98A"/></svg>' +
+      '<div style="font-size:24px;font-weight:800">Período de demonstração terminado</div>' +
+      '<div style="color:var(--soft);font-size:14.5px;max-width:440px;line-height:1.6">Esta demonstração da Consola ClubMap chegou ao fim.<br>Para ativar a versão completa para a tua casa — com sincronização em tempo real, contas da equipa e arquivo na nuvem — fala connosco.</div>' +
+      '</div>';
+    return;
+  }
+  const dExp = new Date(DEMO_EXPIRA + 'T00:00:00');
+  const resta = Math.max(0, Math.ceil((dExp - hoje) / 864e5));
+  const prazo = $('demoPrazo');
+  if (prazo) prazo.textContent = '⏳ Demo ativa — termina em ' + resta + ' dia' + (resta === 1 ? '' : 's');
+  document.querySelectorAll('#nav .it').forEach(it => it.classList.toggle('on', it.dataset.v === vista));
+  ({painel: rPainel, mapa: rMapa, reservas: rReservas, clientes: rClientes, caixa: rCaixa, arquivo: rArquivo})[vista]();
+}
+
+function topbar(t, sub, botoes) {
+  $('topbar').innerHTML = '<div><h1>' + t + '</h1><div class="sub">' + sub + '</div></div><div class="grow"></div>' + (botoes || '');
+}
+
+/* ---------- painel ---------- */
+function rPainel() {
+  const s = stats();
+  topbar('Painel da Receção', dataPT(isoHoje),
+    '<span class="chip" style="cursor:default"><span style="width:8px;height:8px;border-radius:4px;background:var(--livre);display:inline-block"></span> Sincronizado com a sala</span>' +
+    '<button class="btn gold" onclick="abrirNovaReserva()">＋ Nova reserva</button>');
+  const rh = resHoje();
+  $('body').innerHTML =
+    '<div class="kpis">' +
+      kpi('MESAS LIVRES', s.livres + ' <small>/ ' + s.total + '</small>', '<span style="color:var(--livre)">Prontas a vender</span>') +
+      kpi('RESERVAS DE HOJE', s.nRes, s.nRes - s.nPagas > 0 ? '<span style="color:var(--res)">' + (s.nRes - s.nPagas) + ' por confirmar pagamento</span>' : '<span style="color:var(--livre)">Todas pagas</span>') +
+      kpi('MESAS OCUPADAS', s.ocup + ' <small>· ' + Math.round(s.ocup / s.total * 100) + '%</small>', '<span style="color:var(--soft)">Em tempo real, do tablet da sala</span>') +
+      kpi('CAIXA DO DIA', '<span style="color:var(--brass)">' + MT(s.caixa).replace(' MT', '') + ' <small style="color:var(--brass)">MT</small></span>', '<span style="color:var(--soft)">' + s.nPagas + ' de ' + s.nRes + ' consumos mínimos pagos</span>', true) +
+    '</div>' +
+    '<div class="duas"><div class="esq card" style="padding: 4px 0 8px">' +
+      '<div style="display:flex;align-items:center;padding:14px 18px 8px"><h3>Reservas de hoje</h3><div class="grow"></div><span style="color:var(--brass);font-size:12.5px;font-weight:700;cursor:pointer" onclick="vista=\'reservas\';render()">Ver todas →</span></div>' +
+      tabelaReservas(rh) +
+    '</div>' +
+    '<div class="dir card" style="padding: 14px 16px">' +
+      '<div style="display:flex;align-items:center;margin-bottom:10px"><h3>Mesas — agora</h3><div class="grow"></div><span style="color:var(--brass);font-size:12.5px;font-weight:700;cursor:pointer" onclick="vista=\'mapa\';render()">Abrir mapa →</span></div>' +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">' +
+        chipF('todas', 'Todas · ' + s.total) + chipF('livre', 'Livres · ' + s.livres) + chipF('reservada', 'Res. · ' + s.resv) + chipF('ocupada', 'Ocup. · ' + s.ocup) +
+      '</div>' +
+      '<div id="listaMesas">' + listaMesas() + '</div>' +
+      '<div style="color:var(--soft);font-size:11.5px;text-align:center;border-top:1px solid var(--line);padding-top:10px;margin-top:10px">Atualizado ao segundo pelo tablet da sala.</div>' +
+    '</div></div>';
+}
+function kpi(l, v, f, d) { return '<div class="kpi' + (d ? ' destq' : '') + '"><div class="lbl">' + l + '</div><div class="val">' + v + '</div><div class="foot">' + f + '</div></div>'; }
+function chipF(k, t) { return '<span class="chip' + (filtroMesas === k ? ' on' : '') + '" onclick="filtroMesas=\'' + k + '\';render()">' + t + '</span>'; }
+function listaMesas() {
+  const cls = {livre: 'l', reservada: 'r', ocupada: 'o'};
+  let mesas = mesasBase().map(m => ({...m, e: estadoMesa(m.n)}));
+  if (filtroMesas !== 'todas') mesas = mesas.filter(m => m.e === filtroMesas);
+  const ordem = {ocupada: 0, reservada: 1, livre: 2};
+  mesas.sort((a, b) => ordem[a.e] - ordem[b.e] || a.n - b.n);
+  return (mesasExpandido ? mesas : mesas.slice(0, 9)).map(m => {
+    const quem = quemNaMesa(m.n);
+    const r = resHoje().find(x => x.mesa === m.n);
+    return '<div style="display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:8px 10px;margin-bottom:7px">' +
+      '<span class="num ' + cls[m.e] + '">' + m.n + '</span>' +
+      '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (quem || 'Livre') + '</div>' +
+      '<div style="color:var(--soft);font-size:11.5px">' + m.zona + ' · ' + m.lug + ' lugares' + (r && m.e === 'reservada' ? ' · ' + r.hora : '') + '</div></div>' +
+      (m.e === 'livre'
+        ? '<button class="btn ghost" style="padding:7px 11px;font-size:12px" onclick="abrirNovaReserva(' + m.n + ')">Reservar</button>'
+        : '<span style="color:var(--' + (m.e === 'ocupada' ? 'ocu' : 'res') + ');font-size:10.5px;font-weight:800">' + m.e.toUpperCase() + '</span>') +
+      '</div>';
+  }).join('') + (mesas.length > 9
+    ? (mesasExpandido
+      ? '<div style="color:var(--brass);font-size:12.5px;font-weight:700;text-align:center;padding:8px;cursor:pointer" onclick="mesasExpandido=false;render()">− Mostrar menos</div>'
+      : '<div style="color:var(--brass);font-size:12.5px;font-weight:700;text-align:center;padding:8px;cursor:pointer" onclick="mesasExpandido=true;render()">+ Ver as ' + (mesas.length - 9) + ' mesas restantes</div>')
+    : '');
+}
+function tabelaReservas(rs, comData) {
+  if (!rs.length) return '<div style="color:var(--soft);text-align:center;padding:26px">Sem reservas' + (comData ? ' futuras' : ' para hoje') + '. Cria a primeira com ＋ Nova reserva.</div>';
+  return '<table class="tbl"><tr>' + (comData ? '<th>DATA</th>' : '') + '<th>HORA</th><th>MESA</th><th>CLIENTE</th><th class="hide-sm">TELEFONE</th><th>PESSOAS</th><th class="hide-sm">CONSUMO MÍN.</th><th>ESTADO</th><th></th></tr>' +
+    rs.map(r => {
+      const c = cliente(r.tel);
+      const chk = DB.checkins.includes(r.mesa);
+      return '<tr>' + (comData ? '<td style="font-weight:700">' + dataPT(r.data).split(',')[0] + ' ' + r.data.slice(8) + '</td>' : '') +
+        '<td class="hora">' + r.hora + '</td><td style="font-weight:700">' + r.mesa + '</td>' +
+        '<td style="font-weight:700">' + c.nome + (c.vip ? ' <span class="tag-vip">VIP</span>' : '') + '</td>' +
+        '<td class="hide-sm" style="color:var(--soft)">' + c.tel + '</td><td>' + r.pax + '</td><td class="hide-sm">' + MT(r.valor) + '</td>' +
+        '<td>' + (r.pago ? '<span class="pill ok">✓ PAGO</span>' : '<span class="pill warn">POR PAGAR</span>') + '</td>' +
+        '<td style="text-align:right;white-space:nowrap">' +
+          (!r.pago ? '<button class="btn ghost" style="padding:7px 10px;font-size:12px" onclick="marcarPago(' + r.id + ')">Pagar</button> ' : '') +
+          (r.data === isoHoje && !chk ? '<button class="btn ghost" style="padding:7px 10px;font-size:12px;color:var(--livre)" onclick="checkin(' + r.mesa + ')">Check-in</button>' : chk ? '<span style="color:var(--livre);font-size:11px;font-weight:800">NA MESA</span>' : '') +
+        '</td></tr>';
+    }).join('') + '</table>';
+}
+
+/* ---------- reservas ---------- */
+function rReservas() {
+  topbar('Reservas', 'Hoje e dias futuros — cada reserva fica ligada à ficha do cliente', '<button class="btn gold" onclick="abrirNovaReserva()">＋ Nova reserva</button>');
+  const fut = resFuturas();
+  $('body').innerHTML =
+    '<div class="card" style="padding:4px 0 8px;margin-bottom:14px"><div style="padding:14px 18px 8px"><h3>Hoje — ' + dataPT(isoHoje) + '</h3></div>' + tabelaReservas(resHoje()) + '</div>' +
+    '<div class="card" style="padding:4px 0 8px"><div style="padding:14px 18px 8px"><h3>Próximos dias</h3></div>' + tabelaReservas(fut, true) + '</div>';
+}
+
+/* ---------- clientes ---------- */
+function rClientes() {
+  const tudo = Object.entries(DB.clientes);
+  const q = pesquisaCli.toLowerCase().replace(/\s/g, '');
+  const lista = tudo.filter(([tel, c]) => !q || tel.includes(q) || c.nome.toLowerCase().includes(pesquisaCli.toLowerCase()));
+  topbar('Clientes', tudo.length + ' fichas · o telefone é o identificador único — sem fichas repetidas', '<button class="btn gold" onclick="abrirNovoCliente()">＋ Novo cliente</button>');
+  const c = DB.clientes[cliSel];
+  $('body').innerHTML =
+    '<div style="margin-bottom:14px;max-width:420px"><input placeholder="🔍  Pesquisar por telefone ou nome…" value="' + pesquisaCli.replace(/"/g, '&quot;') + '" oninput="pesquisaCli=this.value;renderSoLista()"></div>' +
+    '<div class="duas"><div class="esq card" id="cardCli" style="padding:4px 0 8px">' + tabelaClientes(lista) + '</div>' +
+    '<div class="dir card" style="padding:20px;border-color:var(--brass)" id="fichaCli">' + (c ? fichaCliente(cliSel, c) : '') + '</div></div>';
+}
+function renderSoLista() {
+  const q = pesquisaCli.toLowerCase().replace(/\s/g, '');
+  const lista = Object.entries(DB.clientes).filter(([tel, c]) => !q || tel.includes(q) || c.nome.toLowerCase().includes(pesquisaCli.toLowerCase()));
+  $('cardCli').innerHTML = tabelaClientes(lista);
+}
+function iniciais(nome) {
+  const limpo = nome.replace(/\b(Sr\.?|Sra\.?|Dr\.?|Dra\.?|Dona|Mr\.?)\s*/gi, '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+  const p = limpo.split(/\s+/).filter(Boolean);
+  if (!p.length) return '?';
+  return (p.length >= 2 ? p[0][0] + p[p.length - 1][0] : p[0].slice(0, 2)).toUpperCase();
+}
+function tabelaClientes(lista) {
+  if (!lista.length) return '<div style="color:var(--soft);text-align:center;padding:26px">Nenhum cliente encontrado. <b style="color:var(--ink)">＋ Novo cliente</b> cria a ficha na hora.</div>';
+  return '<table class="tbl"><tr><th>CLIENTE</th><th>TELEFONE (ID)</th><th>VISITAS</th><th>ÚLTIMA VISITA</th><th class="hide-sm">CONSUMO ACUM.</th><th></th></tr>' +
+    lista.map(([tel, c]) => {
+      const ini = iniciais(c.nome);
+      return '<tr class="click" onclick="cliSel=\'' + tel + '\';render()">' +
+        '<td><div style="display:flex;align-items:center;gap:10px"><span class="avatar" style="width:34px;height:34px;font-size:11px;flex-shrink:0;' + (c.vip ? '' : 'background:var(--panel);border-color:var(--line);color:var(--soft)') + '">' + ini + '</span><b>' + c.nome + '</b>' + (c.vip ? ' <span class="tag-vip">VIP</span>' : '') + '</div></td>' +
+        '<td style="font-weight:600">' + c.tel + '</td><td>' + c.visitas + '</td><td style="color:var(--soft)">' + c.ultima + '</td>' +
+        '<td class="hide-sm" style="color:' + (c.vip ? 'var(--brass)' : 'var(--soft)') + ';font-weight:700">' + MT(c.consumo || 0) + '</td>' +
+        '<td><button class="btn ghost" style="padding:7px 12px;font-size:12px" onclick="event.stopPropagation();abrirNovaReserva(null,\'' + tel + '\')">Reservar</button></td></tr>';
+    }).join('') + '</table>';
+}
+function fichaCliente(tel, c) {
+  const hist = DB.reservas.filter(r => r.tel === tel).sort((a, b) => (b.data + b.hora).localeCompare(a.data + a.hora)).slice(0, 4);
+  const ini = iniciais(c.nome);
+  return '<div style="display:flex;align-items:center;gap:14px;margin-bottom:12px"><div class="avatar" style="width:54px;height:54px;font-size:18px;border-width:2px">' + ini + '</div>' +
+    '<div><b style="font-size:17px">' + c.nome + '</b>' + (c.vip ? ' <span class="tag-vip">VIP</span>' : '') + '<div style="color:var(--soft);font-size:13px">' + c.tel + '</div></div>' +
+    '<div class="grow"></div><button class="btn ghost" style="padding:8px 12px;font-size:12px" onclick="abrirEditarCliente(\'' + tel + '\')">✎ Editar</button></div>' +
+    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">' +
+      miniStat(c.visitas, 'VISITAS') + miniStat('0', 'FALTAS') + miniStat('<span style="color:var(--brass)">' + Math.round((c.consumo || 0) / 1000) + 'k</span>', 'CONSUMO MT') + '</div>' +
+    '<label>HISTÓRICO DE RESERVAS</label>' +
+    (hist.length ? hist.map(r => '<div style="display:flex;gap:10px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:6px;font-size:12.5px;align-items:center">' +
+      '<b style="min-width:86px">' + (r.data === isoHoje ? 'Hoje' : dataPT(r.data).split(',')[0] + ' ' + r.data.slice(8)) + ' · ' + r.hora + '</b><span style="color:var(--soft);flex:1">Mesa ' + r.mesa + ' · ' + r.pax + ' pessoas</span>' +
+      (r.pago ? '<span style="color:var(--livre);font-size:10.5px;font-weight:800">✓ PAGO</span>' : '<span style="color:var(--res);font-size:10.5px;font-weight:800">POR PAGAR</span>') + '</div>').join('')
+      : '<div style="color:var(--soft);font-size:12.5px;padding:6px 0 10px">Ainda sem reservas.</div>') +
+    (c.notas ? '<label>NOTAS</label><div style="background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--soft);font-size:12.5px;margin-bottom:12px">' + c.notas + '</div>' : '') +
+    '<button class="btn gold" style="width:100%;margin-top:6px" onclick="abrirNovaReserva(null,\'' + tel + '\')">Reservar mesa para ' + c.nome.split(' ')[0].replace('Sr.', '').replace('Dra.', '') + '</button>';
+}
+function miniStat(v, l) { return '<div style="background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800">' + v + '</div><div style="color:var(--soft);font-size:10px;font-weight:700;letter-spacing:.6px">' + l + '</div></div>'; }
+
+/* ---------- caixa ---------- */
+const PORDIA = {0: 9, 1: 0, 2: 6, 3: 11, 4: 14, 5: 26, 6: 30}; /* reservas típicas por dia da semana */
+function histDias() {
+  return [1, 2, 3, 4, 5, 6].map(k => {
+    const d = new Date(hoje.getTime() - k * 864e5);
+    const n = PORDIA[d.getDay()];
+    return {d: DIAS[d.getDay()] + ', ' + d.getDate() + ' ' + MESES[d.getMonth()], n: n, v: n * 10000};
+  });
+}
+function linhasPeriodo() {
+  const s = stats();
+  const hojeRow = {d: 'Hoje — ' + dataPT(isoHoje), n: s.nPagas, v: s.caixa};
+  if (periodoCaixa === 'semana') return [hojeRow].concat(histDias());
+  const sem = histDias();
+  const totSem = sem.reduce((a, r) => a + r.v, 0) + s.caixa;
+  const nSem = sem.reduce((a, r) => a + r.n, 0) + s.nPagas;
+  return [
+    {d: 'Semana 1 do mês', n: 88, v: 880000},
+    {d: 'Semana 2 do mês', n: 96, v: 965000},
+    {d: 'Semana 3 do mês', n: 104, v: 1040000},
+    {d: 'Semana atual (até hoje)', n: nSem, v: totSem},
+  ];
+}
+function rCaixa() {
+  const s = stats();
+  const chip = p => '<span class="chip' + (periodoCaixa === p ? ' on' : '') + '" onclick="periodoCaixa=\'' + p + '\';render()">' + (p === 'hoje' ? 'Hoje' : p === 'semana' ? 'Esta semana' : 'Este mês') + '</span>';
+  topbar('Caixa &amp; Relatórios', dataPT(isoHoje),
+    chip('hoje') + chip('semana') + chip('mes') +
+    '<button class="btn gold" onclick="imprimirRelatorio()">🖨 Imprimir relatório</button>');
+  if (periodoCaixa !== 'hoje') {
+    const linhas = linhasPeriodo();
+    const tot = linhas.reduce((a, r) => a + r.v, 0), nTot = linhas.reduce((a, r) => a + r.n, 0);
+    $('body').innerHTML =
+      '<div class="kpis" style="grid-template-columns:repeat(2,1fr)">' +
+        kpi('TOTAL RECEBIDO — ' + (periodoCaixa === 'semana' ? 'ÚLTIMOS 7 DIAS' : 'ESTE MÊS'), '<span style="color:var(--brass)">' + MT(tot).replace(' MT', '') + ' <small style="color:var(--brass)">MT</small></span>', '<span style="color:var(--soft)">Consumos mínimos de reserva</span>', true) +
+        kpi('RESERVAS PAGAS', nTot, '<span style="color:var(--livre)">No período selecionado</span>') +
+      '</div>' +
+      '<div class="card" style="padding:4px 0 0">' +
+      '<div style="display:flex;align-items:center;padding:14px 18px 8px"><h3>' + (periodoCaixa === 'semana' ? 'Por dia — últimos 7 dias' : 'Por semana — este mês') + '</h3></div>' +
+      '<table class="tbl"><tr><th>' + (periodoCaixa === 'semana' ? 'DIA' : 'SEMANA') + '</th><th>RESERVAS PAGAS</th><th>TOTAL</th></tr>' +
+      linhas.map(r => '<tr><td style="font-weight:700">' + r.d + '</td><td>' + r.n + '</td><td style="font-weight:800;color:var(--' + (r.v ? 'livre' : 'soft') + ')">' + (r.v ? MT(r.v) : '—') + '</td></tr>').join('') +
+      '</table>' +
+      '<div style="display:flex;align-items:center;padding:14px 18px;border-top:1px solid var(--line)"><b style="color:var(--soft);font-size:12.5px">TOTAL DO PERÍODO</b><div class="grow"></div><b style="color:var(--brass);font-size:17px">' + MT(tot) + '</b></div>' +
+      '</div>';
+    return;
+  }
+  const rh = resHoje();
+  $('body').innerHTML =
+    '<div class="kpis" style="grid-template-columns:repeat(3,1fr)">' +
+      kpi('TOTAL RECEBIDO HOJE', '<span style="color:var(--brass)">' + MT(s.caixa).replace(' MT', '') + ' <small style="color:var(--brass)">MT</small></span>', '<span style="color:var(--soft)">Consumos mínimos de reserva</span>', true) +
+      kpi('RESERVAS PAGAS', s.nPagas + ' <small>de ' + s.nRes + '</small>', '<span style="color:var(--livre)">Registadas pela receção</span>') +
+      kpi('POR COBRAR', MT(s.porCobrar).replace(' MT', '') + ' <small>MT</small>', s.nRes - s.nPagas > 0 ? '<span style="color:var(--res)">' + (s.nRes - s.nPagas) + ' reserva(s) por confirmar</span>' : '<span style="color:var(--livre)">Tudo cobrado 🎉</span>') +
+    '</div>' +
+    '<div class="card" style="padding:4px 0 0">' +
+    '<div style="display:flex;align-items:center;padding:14px 18px 8px"><h3>Pagamentos de hoje</h3><div class="grow"></div><span style="color:var(--soft);font-size:12px">Registados por: Neusa (Receção)</span></div>' +
+    '<table class="tbl"><tr><th>MESA</th><th>CLIENTE</th><th>RESERVA</th><th>RECEBIDO ÀS</th><th>VALOR</th><th>ESTADO</th></tr>' +
+    rh.slice().sort((a, b) => (a.pago === b.pago) ? a.hora.localeCompare(b.hora) : (a.pago ? -1 : 1)).map(r => {
+      const c = cliente(r.tel);
+      return '<tr><td style="font-weight:700">' + r.mesa + '</td><td style="font-weight:700">' + c.nome + '</td>' +
+        '<td style="color:var(--soft)">Hoje · ' + r.hora + '</td><td style="color:var(--soft)">' + (r.pagoAs || '—') + '</td>' +
+        '<td style="font-weight:800;color:var(--' + (r.pago ? 'livre' : 'res') + ')">' + MT(r.valor) + '</td>' +
+        '<td>' + (r.pago ? '<span class="pill ok">✓ PAGO</span>' : '<button class="btn ghost" style="padding:7px 12px;font-size:12px" onclick="marcarPago(' + r.id + ')">Registar</button>') + '</td></tr>';
+    }).join('') + '</table>' +
+    '<div style="display:flex;align-items:center;padding:14px 18px;border-top:1px solid var(--line)"><b style="color:var(--soft);font-size:12.5px">TOTAL DO DIA</b><div class="grow"></div><b style="color:var(--brass);font-size:17px">' + MT(s.caixa) + '</b></div>' +
+    '</div>';
+}
+function imprimirRelatorio() {
+  const s = stats();
+  if (periodoCaixa !== 'hoje') {
+    const linhas = linhasPeriodo();
+    const tot = linhas.reduce((a, r) => a + r.v, 0);
+    $('printArea').innerHTML = '<h1>ClubMap — Relatório de reservas pagas</h1><div class="m">' + (periodoCaixa === 'semana' ? 'Últimos 7 dias' : 'Este mês') + ' · emitido pela Receção (Neusa Matusse) · DEMONSTRAÇÃO</div>' +
+      '<table><tr><th>' + (periodoCaixa === 'semana' ? 'Dia' : 'Semana') + '</th><th>Reservas pagas</th><th>Total</th></tr>' +
+      linhas.map(r => '<tr><td>' + r.d + '</td><td>' + r.n + '</td><td>' + (r.v ? MT(r.v) : '—') + '</td></tr>').join('') +
+      '</table><div class="tot">Total do período: ' + MT(tot) + '</div>';
+    window.print();
+    return;
+  }
+  const rh = resHoje();
+  $('printArea').innerHTML = '<h1>ClubMap — Relatório de reservas pagas</h1><div class="m">' + dataPT(isoHoje) + ' · emitido pela Receção (Neusa Matusse) · DEMONSTRAÇÃO</div>' +
+    '<table><tr><th>Mesa</th><th>Cliente</th><th>Telefone</th><th>Reserva</th><th>Recebido às</th><th>Valor</th></tr>' +
+    rh.filter(r => r.pago).map(r => { const c = cliente(r.tel); return '<tr><td>' + r.mesa + '</td><td>' + c.nome + '</td><td>' + c.tel + '</td><td>' + r.hora + '</td><td>' + r.pagoAs + '</td><td>' + MT(r.valor) + '</td></tr>'; }).join('') +
+    '</table><div class="tot">Total recebido: ' + MT(s.caixa) + '</div>';
+  window.print();
+}
+
+/* ---------- arquivo ---------- */
+const NOITES = [
+  {t: 'Sábado, 15 Ago 2026', n: 32, v: 310000, pct: 91, hora: '22:40'},
+  {t: 'Sexta, 14 Ago 2026', n: 28, v: 265000, pct: 84, hora: '23:30'},
+  {t: 'Quinta, 13 Ago 2026', n: 18, v: 155000, pct: 62, hora: '23:00'},
+  {t: 'Domingo, 9 Ago 2026', n: 11, v: 90000, pct: 40, hora: '22:00'},
+];
+function abrirNoite(i) { noiteIdx = i; arquivoAberto = true; render(); }
+function rArquivo() {
+  if (arquivoAberto) return rArquivoNoite();
+  topbar('Histórico de noites', 'Cada noite fica arquivada — layout, reservas e pagamentos', '');
+  $('body').innerHTML = '<div class="card" style="padding:16px 18px;max-width:760px">' +
+    NOITES.map((n, i) => '<div style="display:flex;align-items:center;gap:14px;background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:13px 14px;margin-bottom:8px;cursor:pointer" onclick="abrirNoite(' + i + ')">' +
+      '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9A227" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9"/><path d="M10 13h4"/></svg>' +
+      '<div style="flex:1"><b style="font-size:14px">' + n.t + '</b><div style="color:var(--soft);font-size:12px">' + n.n + ' reservas · ' + MT(n.v) + ' · ocupação ' + n.pct + '%</div></div>' +
+      '<span style="color:var(--brass);font-weight:700;font-size:13px">Abrir →</span></div>').join('') +
+    '<div style="background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:11px 14px;color:var(--soft);font-size:12.5px;margin-top:6px"><b style="color:var(--brass)">Exemplo:</b> "Quem estava na mesa 501 no sábado?" — abre o sábado e vê o filme da noite, mesa a mesa.</div>' +
+    '</div>';
+}
+function painelPagamentosNoite(N) {
+  const nomes = ['Anifa Momade', 'Carlos Macuácua', 'Telma Nhaca', 'Élio Sitoe', 'Marta Cumbe', 'Sr. Chambule'];
+  const mesasN = [2, 301, 405, 39, 504, 601];
+  const horas = ['17:20', '18:05', '18:40', '19:15', '19:50', '20:30'];
+  const k = Math.min(6, N.n);
+  let rows = '';
+  for (let i = 0; i < k; i++) {
+    rows += '<div style="display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:6px">' +
+      '<b style="font-size:12.5px;min-width:64px">Mesa ' + mesasN[i] + '</b>' +
+      '<span style="color:var(--soft);font-size:12.5px;flex:1">' + nomes[(i + noiteIdx) % nomes.length] + ' · ' + horas[i] + '</span>' +
+      '<span style="color:var(--livre);font-size:11px;font-weight:800">' + MT(10000) + '</span></div>';
+  }
+  return '<div class="dir card" style="padding:18px 20px">' +
+    '<b style="font-size:15px">Pagamentos dessa noite</b>' +
+    '<div style="color:var(--soft);font-size:12px;margin-bottom:12px">' + N.n + ' reservas · consumo mínimo · total ' + MT(N.v) + '</div>' +
+    rows +
+    (N.n > k ? '<div style="color:var(--soft);font-size:12px;text-align:center;padding:4px">+ ' + (N.n - k) + ' pagamentos no relatório completo</div>' : '') +
+    '<div style="background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--soft);font-size:12px;margin-top:10px">Na versão completa, tocar numa mesa da planta mostra a linha do tempo dessa mesa nessa noite.</div>' +
+    '</div>';
+}
+function imprimirNoite() {
+  const N = NOITES[noiteIdx];
+  const nomes = ['Anifa Momade', 'Carlos Macuácua', 'Telma Nhaca', 'Élio Sitoe', 'Marta Cumbe', 'Sr. Chambule'];
+  const mesasN = [2, 301, 405, 39, 504, 601];
+  const horas = ['17:20', '18:05', '18:40', '19:15', '19:50', '20:30'];
+  const k = Math.min(6, N.n);
+  let rows = '';
+  for (let i = 0; i < k; i++) rows += '<tr><td>' + mesasN[i] + '</td><td>' + nomes[(i + noiteIdx) % nomes.length] + '</td><td>' + horas[i] + '</td><td>' + MT(10000) + '</td></tr>';
+  $('printArea').innerHTML = '<h1>ClubMap — Arquivo da noite</h1><div class="m">' + N.t + ' · ' + N.n + ' reservas · ocupação ' + N.pct + '% · DEMONSTRAÇÃO</div>' +
+    '<table><tr><th>Mesa</th><th>Cliente</th><th>Recebido às</th><th>Valor</th></tr>' + rows + '</table>' +
+    (N.n > k ? '<div class="m" style="margin-top:8px">+ ' + (N.n - k) + ' registos adicionais nesta noite (amostra da demonstração)</div>' : '') +
+    '<div class="tot">Total recebido: ' + MT(N.v) + '</div>';
+  window.print();
+}
+function rArquivoNoite() {
+  const N = NOITES[noiteIdx];
+  topbar('Noite de ' + N.t, N.n + ' reservas · ' + MT(N.v) + ' recebidos · ocupação ' + N.pct + '% · arquivada automaticamente às 04:12',
+    '<button class="btn ghost" onclick="arquivoAberto=false;render()">← Arquivo</button><button class="btn gold" onclick="imprimirNoite()">Exportar esta noite</button>');
+  if (noiteIdx !== 0) {
+    $('body').innerHTML = '<div class="duas">' +
+      '<div class="esq card" style="padding:16px 18px"><div style="display:flex;align-items:center;margin-bottom:10px"><h3>A sala como estava às ' + N.hora + '</h3><div class="grow"></div>' +
+      '<span style="color:var(--soft);font-size:11.5px"><span style="color:var(--livre)">●</span> Livre&nbsp;&nbsp;<span style="color:var(--res)">●</span> Reservada&nbsp;&nbsp;<span style="color:var(--ocu)">●</span> Ocupada</span></div>' +
+      '<div style="background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;justify-content:center">' + svgPlanta(mesasNoite(N.pct, noiteIdx)) + '</div></div>' +
+      painelPagamentosNoite(N) + '</div>';
+    return;
+  }
+  const ev = [
+    ['20:15 · Ocupada — walk-in · 2 pessoas', 'registado por Bento (sala)', 'var(--ocu)'],
+    ['21:30 · Libertada', 'registado por Bento (sala)', 'var(--livre)'],
+    ['21:45 · Check-in — Sr. Carlos Macuácua · 4 pessoas', 'reserva das 21:30 · consumo mínimo pago (10.000 MT) · registado por Neusa (receção)', 'var(--ocu)', true],
+    ['23:50 · Libertada', 'registado por Bento (sala)', 'var(--livre)'],
+    ['00:10 · Ocupada — walk-in · 6 pessoas', 'registado por Bento (sala)', 'var(--ocu)'],
+    ['02:30 · Libertada — fecho da noite', 'arquivada automaticamente', 'var(--livre)'],
+  ];
+  $('body').innerHTML = '<div class="duas">' +
+    '<div class="esq card" style="padding:16px 18px"><div style="display:flex;align-items:center;margin-bottom:10px"><h3>A sala como estava às 22:40</h3><div class="grow"></div>' +
+      '<span style="color:var(--soft);font-size:11.5px"><span style="color:var(--livre)">●</span> Livre&nbsp;&nbsp;<span style="color:var(--res)">●</span> Reservada&nbsp;&nbsp;<span style="color:var(--ocu)">●</span> Ocupada</span></div>' +
+      '<div style="background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;justify-content:center">' + svgSala() + '</div></div>' +
+    '<div class="dir card" style="padding:18px 20px;border-color:var(--sel)">' +
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><span class="num" style="background:var(--bg);border:2px solid var(--sel);color:var(--sel);width:46px">501</span>' +
+      '<div><b style="font-size:15px">Linha do tempo — Mesa 501</b><div style="color:var(--soft);font-size:12px">Sábado, 15 Ago · 3 ocupações na noite</div></div></div>' +
+      ev.map((e, i) => '<div class="tl"><div class="rail"><div class="dot" style="background:' + e[2] + '"></div>' + (i < ev.length - 1 ? '<div class="bar"></div>' : '') + '</div>' +
+        '<div class="txt">' + (e[3] ? '<div style="background:var(--bg);border:1px solid var(--sel);border-radius:10px;padding:10px 12px"><b>' + e[0] + '</b><small>' + e[1] + '</small><div style="color:var(--sel);font-size:11px;font-weight:800;margin-top:4px">● ESTAVA NA MESA ÀS 22:40</div></div>' : '<b>' + e[0] + '</b><small>' + e[1] + '</small>') + '</div></div>').join('') +
+      '<div style="background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--soft);font-size:12px;margin-top:8px">Cada mudança de estado fica registada com hora e autor — a resposta a "quem estava nesta mesa?" é sempre exata.</div>' +
+    '</div></div>';
+}
+/* ============ planta: renderizador portado do App.tsx da ClubMap ============ */
+const PC = {ink: '#EDE6D6', brass: '#C9A227', livre: '#43C98B', res: '#E5A33C', ocu: '#FF5C6C'};
+const P_DECOR = {dj: 1, luz: 1, texto: 1, portao: 1, porta: 1, parede: 1};
+function pDims(m) {
+  let b;
+  switch (m.t) {
+    case 'redonda': b = {w: 66, h: 66, round: true}; break;
+    case 'oval': b = {w: 98, h: 64, round: true}; break;
+    case 'quadrada': b = {w: 62, h: 62}; break;
+    case 'retangular': b = {w: 112, h: 58}; break;
+    case 'sofa2': b = {w: 100, h: 72}; break;
+    case 'luz': b = {w: 40, h: 40, round: true}; break;
+    case 'dj': b = {w: 104, h: 64}; break;
+    case 'texto': b = {w: 150, h: 32}; break;
+    case 'portao': b = {w: 150, h: 16}; break;
+    case 'porta': b = {w: 48, h: 48}; break;
+    case 'parede': b = {w: 14, h: 180}; break;
+    default: b = {w: 62, h: 62};
+  }
+  return {w: m.w || b.w, h: m.h || b.h, round: !!b.round};
+}
+function pCad(m) {
+  if (m.cad) return {c: m.cad.c || 0, b: m.cad.b || 0, e: m.cad.e || 0, d: m.cad.d || 0};
+  const d = pDims(m), n = Math.min(m.lug || 0, 16);
+  const vert = d.h > d.w, nA = Math.ceil(n / 2), nB = n - nA;
+  return vert ? {c: 0, b: 0, e: nA, d: nB} : {c: nA, b: nB, e: 0, d: 0};
+}
+function pChair(x, y, rot, cor) {
+  return '<g transform="translate(' + x + ',' + y + ') rotate(' + rot + ')">' +
+    '<ellipse cx="1" cy="1.5" rx="8.5" ry="9.5" fill="rgba(0,0,0,.45)"/>' +
+    '<rect x="-7" y="-8" width="13" height="16" rx="4" fill="#262B35" stroke="#0B0F14" stroke-width="1"/>' +
+    '<rect x="-5.5" y="-6.5" width="10" height="13" rx="3" fill="' + (cor || '#D9CCA9') + '"/>' +
+    '<rect x="4.5" y="-8" width="3.5" height="16" rx="1.75" fill="#0B0F14"/></g>';
+}
+function pChairs(m) {
+  if (P_DECOR[m.t] || m.t === 'sofa2' || !m.lug) return '';
+  const d = pDims(m), n = Math.min(m.lug, 16);
+  const cor = m.e === 'ocupada' ? PC.ocu : m.e === 'reservada' ? PC.res : undefined;
+  let out = '';
+  if (d.round) {
+    const Rx = d.w / 2 + 14, Ry = d.h / 2 + 14;
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * 360 - 90, r = (a * Math.PI) / 180;
+      out += pChair(Rx * Math.cos(r), Ry * Math.sin(r), a, cor);
+    }
+  } else {
+    const cad = pCad(m), offY = d.h / 2 + 14, offX = d.w / 2 + 14;
+    const fila = (cnt, horiz, fixed, rot) => {
+      const len = (horiz ? d.w : d.h) - 12;
+      for (let i = 0; i < cnt; i++) {
+        const t = (i + 1) / (cnt + 1), p = -len / 2 + t * len;
+        out += pChair(horiz ? p : fixed, horiz ? fixed : p, rot, cor);
+      }
+    };
+    fila(cad.c, true, -offY, -90); fila(cad.b, true, offY, 90);
+    fila(cad.e, false, -offX, 180); fila(cad.d, false, offX, 0);
+  }
+  return out;
+}
+function pPrato(x, y) {
+  return '<circle cx="' + x + '" cy="' + y + '" r="5.6" fill="#E8E1D2" stroke="#B8AE9A" stroke-width="1"/><circle cx="' + x + '" cy="' + y + '" r="3" fill="none" stroke="#CFC5AF" stroke-width="1"/>';
+}
+function pPratos(m) {
+  if (m.t !== 'redonda' && m.t !== 'oval' && m.t !== 'quadrada' && m.t !== 'retangular') return '';
+  const d = pDims(m), n = Math.min(m.lug || 0, 16);
+  let out = '';
+  if (d.round) {
+    const Rx = d.w / 2 - 12, Ry = d.h / 2 - 12;
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 - Math.PI / 2;
+      out += pPrato(Rx * Math.cos(a), Ry * Math.sin(a));
+    }
+  } else {
+    const cad = pCad(m), inY = d.h / 2 - 12, inX = d.w / 2 - 12;
+    const fila = (cnt, horiz, fixed) => {
+      const len = (horiz ? d.w : d.h) - 12;
+      for (let i = 0; i < cnt; i++) {
+        const t = (i + 1) / (cnt + 1), p = -len / 2 + t * len;
+        out += pPrato(horiz ? p : fixed, horiz ? fixed : p);
+      }
+    };
+    fila(cad.c, true, -inY); fila(cad.b, true, inY); fila(cad.e, false, -inX); fila(cad.d, false, inX);
+  }
+  return out;
+}
+function pRim(m) {
+  if (m.t === 'parede') return '#414B5C';
+  if (P_DECOR[m.t]) return '#A8894A';
+  if (m.e === 'reservada') return PC.res;
+  if (m.e === 'ocupada') return PC.ocu;
+  return '#A8894A';
+}
+function pCorpo(m, rim) {
+  const d = pDims(m), w = d.w, h = d.h;
+  const rw = m.e && m.e !== 'livre' && !P_DECOR[m.t] ? 2.6 : 1.5;
+  switch (m.t) {
+    case 'redonda': case 'oval':
+      return '<ellipse cy="5" rx="' + (w / 2 + 3.5) + '" ry="' + (h / 2 + 2.5) + '" fill="rgba(0,0,0,.5)"/>' +
+        '<ellipse cy="3" rx="' + w / 2 + '" ry="' + h / 2 + '" fill="#0B0F14"/>' +
+        '<ellipse rx="' + w / 2 + '" ry="' + h / 2 + '" fill="url(#p_woodR)" stroke="' + rim + '" stroke-width="' + rw + '"/>' +
+        '<circle r="16" fill="url(#p_luzG)"/>' + pPratos(m);
+    case 'quadrada': case 'retangular':
+      return '<rect x="' + (-w / 2 - 1) + '" y="' + (-h / 2 + 4) + '" width="' + (w + 2) + '" height="' + (h + 2) + '" rx="10" fill="rgba(0,0,0,.5)"/>' +
+        '<rect x="' + -w / 2 + '" y="' + (-h / 2 + 3) + '" width="' + w + '" height="' + h + '" rx="9" fill="#0B0F14"/>' +
+        '<rect x="' + -w / 2 + '" y="' + -h / 2 + '" width="' + w + '" height="' + h + '" rx="9" fill="url(#p_woodL)" stroke="' + rim + '" stroke-width="' + rw + '"/>' +
+        (w > 90 ? '<circle cx="' + -w / 4 + '" r="14" fill="url(#p_luzG)"/><circle cx="' + w / 4 + '" r="14" fill="url(#p_luzG)"/>' : '<circle r="16" fill="url(#p_luzG)"/>') + pPratos(m);
+    case 'sofa2': {
+      const t = Math.max(16, Math.round(Math.min(w, h) * 0.24));
+      const L = (x1, y1, x2, y2) => '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="rgba(0,0,0,.45)" stroke-width="1.4"/>';
+      return '<ellipse cy="6" rx="' + (w / 2 + 3) + '" ry="' + (h / 2 + 4) + '" fill="rgba(0,0,0,.45)"/>' +
+        '<rect x="' + -w / 2 + '" y="' + -h / 2 + '" width="' + w + '" height="' + t + '" rx="9" fill="url(#p_leather)" stroke="' + rim + '" stroke-width="' + rw + '"/>' +
+        '<rect x="' + -w / 2 + '" y="' + -h / 2 + '" width="' + t + '" height="' + h + '" rx="9" fill="url(#p_leather)" stroke="' + rim + '" stroke-width="' + rw + '"/>' +
+        '<rect x="' + (w / 2 - t) + '" y="' + -h / 2 + '" width="' + t + '" height="' + h + '" rx="9" fill="url(#p_leather)" stroke="' + rim + '" stroke-width="' + rw + '"/>' +
+        L(-w / 6, -h / 2 + 2, -w / 6, -h / 2 + t - 2) + L(w / 6, -h / 2 + 2, w / 6, -h / 2 + t - 2) +
+        '<circle cy="' + Math.round(h * 0.14) + '" r="13" fill="url(#p_luzG)"/>';
+    }
+    case 'luz': {
+      const pool = ['p_spotG', 'p_spotM', 'p_spotC'][Math.abs(Math.round((m.x + m.y) / 5)) % 3];
+      const R = Math.round(Math.max(w, h) / 2 + 36);
+      return '<circle r="' + R + '" fill="url(#' + pool + ')"/><circle r="7" fill="#10141B" stroke="' + PC.brass + '" stroke-width="1.5"/><circle r="2.6" fill="#FFD98A"/>';
+    }
+    case 'dj': {
+      const xo = Math.round(w - 12), xi = Math.round(Math.max(14, w / 2 - 22)), yb = Math.round(h / 2 - 14);
+      return '<polygon points="-10,' + yb + ' ' + -xo + ',' + (yb + 134) + ' ' + -xi + ',' + (yb + 134) + '" fill="url(#p_beamM)"/>' +
+        '<polygon points="10,' + yb + ' ' + xi + ',' + (yb + 134) + ' ' + xo + ',' + (yb + 134) + '" fill="url(#p_beamC)"/>' +
+        '<ellipse cy="' + (yb - 4) + '" rx="' + Math.round(w * 0.69) + '" ry="30" fill="url(#p_spotG)"/>' +
+        '<ellipse cy="7" rx="' + (w / 2 + 3) + '" ry="' + (h / 2 - 1) + '" fill="rgba(0,0,0,.5)"/>' +
+        '<rect x="' + -w / 2 + '" y="' + (-h / 2 + 3) + '" width="' + w + '" height="' + Math.max(30, h - 18) + '" rx="8" fill="#0B0F15"/>' +
+        '<rect x="' + -w / 2 + '" y="' + -h / 2 + '" width="' + w + '" height="' + Math.max(30, h - 18) + '" rx="8" fill="url(#p_woodD)" stroke="' + rim + '" stroke-width="' + rw + '"/>' +
+        '<circle cx="' + -(w / 2 - 24) + '" cy="-8" r="12" fill="#0C0F14" stroke="' + PC.brass + '" stroke-width="1.5"/><circle cx="' + -(w / 2 - 24) + '" cy="-8" r="3.4" fill="' + PC.brass + '"/>' +
+        '<circle cx="' + (w / 2 - 24) + '" cy="-8" r="12" fill="#0C0F14" stroke="' + PC.brass + '" stroke-width="1.5"/><circle cx="' + (w / 2 - 24) + '" cy="-8" r="3.4" fill="' + PC.brass + '"/>' +
+        '<rect x="-11" y="-17" width="22" height="20" rx="3" fill="#0C0F14" stroke="rgba(201,162,39,.45)" stroke-width="1"/>' +
+        '<circle cx="-5.5" cy="-12" r="1.6" fill="#E14ECA"/><circle cx="0" cy="-12" r="1.6" fill="#3EC6E0"/><circle cx="5.5" cy="-12" r="1.6" fill="' + PC.brass + '"/>';
+    }
+    case 'texto': {
+      const fs = Math.max(10, Math.round(h * 0.75));
+      return '<text y="' + Math.round(fs * 0.34) + '" font-size="' + fs + '" font-weight="800" letter-spacing="2" fill="#D9CCA9" text-anchor="middle">' + m.l + '</text>';
+    }
+    case 'portao':
+      return '<rect x="' + -w / 2 + '" y="' + -h / 2 + '" width="' + w + '" height="' + h + '" rx="3" fill="rgba(143,212,232,.14)" stroke="#5C8FA3" stroke-width="1.5"/>' +
+        '<rect x="' + (-w / 2 + 4) + '" y="-2" width="' + Math.max(6, w / 2 - 7) + '" height="4" rx="2" fill="rgba(143,212,232,.55)"/>' +
+        '<rect x="3" y="-2" width="' + Math.max(6, w / 2 - 7) + '" height="4" rx="2" fill="rgba(143,212,232,.55)"/>' +
+        '<line x1="0" y1="' + (-h / 2 + 2) + '" x2="0" y2="' + (h / 2 - 2) + '" stroke="#5C8FA3" stroke-width="1.2"/>' +
+        '<rect x="' + (-w / 2 - 5) + '" y="' + (-h / 2 - 2) + '" width="7" height="' + (h + 4) + '" rx="2.5" fill="' + PC.brass + '"/>' +
+        '<rect x="' + (w / 2 - 2) + '" y="' + (-h / 2 - 2) + '" width="7" height="' + (h + 4) + '" rx="2.5" fill="' + PC.brass + '"/>';
+    case 'porta': {
+      const R = Math.max(24, Math.min(w, h) - 8);
+      return '<rect x="' + (-w / 2 - 4) + '" y="' + (h / 2 - 3) + '" width="8" height="8" rx="2" fill="' + PC.brass + '"/>' +
+        '<rect x="' + (-w / 2 + R - 2) + '" y="' + (h / 2 - 3) + '" width="8" height="8" rx="2" fill="' + PC.brass + '"/>' +
+        '<path d="M ' + (-w / 2 + 5) + ' ' + (h / 2 - R) + ' A ' + R + ' ' + R + ' 0 0 1 ' + (-w / 2 + R) + ' ' + (h / 2) + '" fill="none" stroke="#5C7089" stroke-width="1.4" stroke-dasharray="4 3"/>' +
+        '<rect x="' + -w / 2 + '" y="' + (h / 2 - R) + '" width="5" height="' + R + '" rx="2" fill="#D9CCA9" stroke="#8F8877" stroke-width="1"/>';
+    }
+    case 'parede': {
+      const r = Math.min(w / 2, 6);
+      return '<rect x="' + (-w / 2 - 1) + '" y="' + (-h / 2 + 4) + '" width="' + (w + 2) + '" height="' + (h + 2) + '" rx="' + r + '" fill="rgba(0,0,0,.55)"/>' +
+        '<rect x="' + -w / 2 + '" y="' + -h / 2 + '" width="' + w + '" height="' + h + '" rx="' + r + '" fill="#2A303D" stroke="#414B5C" stroke-width="2"/>';
+    }
+    default: return '';
+  }
+}
+function pMesa(m, clicavel) {
+  const d = pDims(m), decor = !!P_DECOR[m.t], rim = pRim(m);
+  let s = '<g ' + (clicavel && !decor ? 'onclick="mesaClicada(\'' + m.l + '\')" style="cursor:pointer" ' : '') + 'transform="translate(' + m.x + ',' + m.y + ') rotate(' + (m.r || 0) + ')">';
+  if (!decor && m.e && m.e !== 'livre') s += '<ellipse rx="' + (d.w / 2 + 24) + '" ry="' + (d.h / 2 + 24) + '" fill="url(#p_halo' + (m.e === 'reservada' ? 'R' : 'O') + ')"/>';
+  s += pChairs(m) + pCorpo(m, rim);
+  if (m.t === 'dj') s += '<g transform="rotate(' + -(m.r || 0) + ')"><text y="34" font-size="11" letter-spacing="2.5" font-weight="700" fill="' + PC.brass + '" text-anchor="middle">' + m.l + '</text></g>';
+  if (m.t === 'sofa2' && m.lug) {
+    const t = Math.max(16, Math.round(Math.min(d.w, d.h) * 0.24));
+    const n = Math.min(m.lug, 12), tom = m.e && m.e !== 'livre' ? n : 0;
+    const corOc = m.e === 'ocupada' ? PC.ocu : PC.res;
+    const yD = -d.h / 2 + t + 13, span = Math.max(24, d.w - 2 * t - 28);
+    for (let i = 0; i < n; i++) s += '<rect x="' + ((n > 1 ? -span / 2 + (i * span) / (n - 1) : 0) - 5) + '" y="' + (yD - 5) + '" width="10" height="10" rx="2.5" fill="' + (i < tom ? corOc : '#57503F') + '"/>';
+    if (m.l) {
+      const yE = -d.h / 2 + t / 2, xN = -(d.w / 2 - t / 2);
+      const chip = m.e === 'reservada' ? '#B3801F' : m.e === 'ocupada' ? '#C13B4A' : '#1E2836';
+      s += '<circle cx="' + xN + '" cy="' + yE + '" r="11" fill="' + chip + '" stroke="rgba(237,230,214,.85)" stroke-width="1.5"/>' +
+        '<text x="' + xN + '" y="' + (yE + 4) + '" font-size="11" font-weight="800" fill="#FFF6E6" text-anchor="middle">' + m.l + '</text>';
+    }
+  }
+  if (!decor && m.t !== 'sofa2' && m.l) {
+    const lw = Math.max(25, String(m.l).length * 8.5 + 9);
+    const chip = m.e === 'reservada' ? '#B3801F' : m.e === 'ocupada' ? '#C13B4A' : '#1E2836';
+    s += '<g transform="rotate(' + -(m.r || 0) + ')">' +
+      '<rect x="' + -lw / 2 + '" y="-12.5" width="' + lw + '" height="25" rx="12.5" fill="' + chip + '" stroke="rgba(237,230,214,.85)" stroke-width="1.8"/>' +
+      '<text y="4.5" font-size="12.5" font-weight="800" fill="#FFF6E6" text-anchor="middle">' + m.l + '</text></g>';
+  }
+  return s + '</g>';
+}
+/* dados REAIS da casa (JSON exportado da app de produção — casa "Arts") */
+const REAL = {"clube":{"nome":"Arts","largura":1280,"altura":1180},"zonas":[{"id":"z46","nome":"VIP Room 2","x":10,"y":390,"w":185,"h":315},{"id":"z47","nome":"VIP Room 1","x":15,"y":710,"w":180,"h":435},{"id":"z48","nome":"300","x":295,"y":390,"w":900,"h":160},{"id":"z1","nome":"Sunset","x":-5,"y":5,"w":1270,"h":370}],"mesas":[{"id":"m26","label":"DJ","tipo":"dj","x":790,"y":595,"rot":180,"esc":1,"lugares":0,"w":150,"h":65},{"id":"m41","label":"Luz","tipo":"luz","x":410,"y":585,"rot":0,"esc":1,"lugares":0},{"id":"m42","label":"Luz","tipo":"luz","x":1105,"y":540,"rot":0,"esc":1,"lugares":0,"w":34,"h":40},{"id":"m44","label":"Luz","tipo":"luz","x":350,"y":765,"rot":0,"esc":1,"lugares":0,"w":34,"h":34},{"id":"m1b","label":"2","tipo":"quadrada","x":100,"y":540,"rot":0,"esc":1,"lugares":10,"cad":{"c":1,"b":1,"e":4,"d":4},"w":60,"h":155},{"id":"m2b","label":"1","tipo":"quadrada","x":100,"y":925,"rot":0,"esc":1,"lugares":12,"cad":{"c":1,"b":1,"e":5,"d":5},"w":70,"h":220},{"id":"m1c","label":"40","tipo":"sofa2","x":860,"y":905,"rot":270,"esc":1,"lugares":5,"w":505,"h":130},{"id":"m2c","label":"41","tipo":"sofa2","x":1125,"y":905,"rot":90,"esc":1,"lugares":5,"w":505,"h":130},{"id":"m3c","label":"39","tipo":"sofa2","x":725,"y":905,"rot":90,"esc":1,"lugares":5,"w":505,"h":130},{"id":"m1f","label":"100","tipo":"texto","x":590,"y":905,"rot":270,"esc":1,"lugares":0},{"id":"m4f","label":"Portão","tipo":"portao","x":195,"y":545,"rot":90,"esc":1,"lugares":0,"w":300,"h":15},{"id":"m5f","label":"Porta","tipo":"porta","x":210,"y":1105,"rot":0,"esc":1,"lugares":0},{"id":"m7f","label":"Portão","tipo":"portao","x":90,"y":10,"rot":0,"esc":1,"lugares":0},{"id":"m13f","label":"200","tipo":"texto","x":995,"y":905,"rot":270,"esc":1,"lugares":0},{"id":"mp3","label":"Parede","tipo":"parede","x":475,"y":220,"rot":0,"esc":1,"lugares":0,"w":10,"h":130},{"id":"mp4","label":"Parede","tipo":"parede","x":865,"y":195,"rot":0,"esc":1,"lugares":0,"w":10,"h":355},{"id":"x6-npbd0","label":"21","tipo":"quadrada","x":1185,"y":1455,"rot":0,"esc":1,"lugares":4,"cad":{"c":1,"b":1,"e":1,"d":1}},{"id":"x8-s1wex","label":"45","tipo":"redonda","x":1410,"y":1220,"rot":0,"esc":1,"lugares":6},{"id":"x8-uarc2","label":"111","tipo":"quadrada","x":705,"y":740,"rot":0,"esc":1,"lugares":1,"cad":{"c":0,"b":0,"e":1,"d":0},"h":52,"w":52},{"id":"x9-bzyvd","label":"111","tipo":"quadrada","x":705,"y":795,"rot":0,"esc":1,"lugares":1,"cad":{"c":0,"b":0,"e":1,"d":0},"h":52,"w":52},{"id":"x10-ajvj6","label":"109","tipo":"quadrada","x":705,"y":880,"rot":0,"esc":1,"lugares":1,"cad":{"c":0,"b":0,"e":1,"d":0},"h":52,"w":52},{"id":"x11-vi714","label":"109","tipo":"quadrada","x":705,"y":935,"rot":0,"esc":1,"lugares":1,"cad":{"c":0,"b":0,"e":1,"d":0},"h":52,"w":52},{"id":"x12-7erf5","label":"107","tipo":"quadrada","x":705,"y":1015,"rot":0,"esc":1,"lugares":1,"cad":{"c":0,"b":0,"e":1,"d":0},"h":52,"w":52},{"id":"x13-px2ki","label":"107","tipo":"quadrada","x":705,"y":1070,"rot":0,"esc":1,"lugares":1,"cad":{"c":0,"b":0,"e":1,"d":0},"h":52,"w":52},{"id":"x14-mjx6j","label":"205","tipo":"quadrada","x":880,"y":740,"rot":0,"esc":1,"lugares":1,"cad":{"c":0,"b":0,"e":0,"d":1},"h":52,"w":52},{"id":"x15-nm74y","label":"201","tipo":"quadrada","x":880,"y":1070,"rot":0,"esc":1,"lugares":1,"cad":{"c":0,"b":0,"e":0,"d":1},"h":52,"w":52},{"id":"x16-m00b7","label":"205","tipo":"quadrada","x":880,"y":795,"rot":0,"esc":1,"lugares":1,"cad":{"c":0,"b":0,"e":0,"d":1},"h":52,"w":52},{"id":"x18-vc44v","label":"201","tipo":"quadrada","x":880,"y":1015,"rot":0,"esc":1,"lugares":1,"cad":{"c":0,"b":0,"e":0,"d":1},"h":52,"w":52},{"id":"x19-p5430","label":"203","tipo":"quadrada","x":880,"y":930,"rot":0,"esc":1,"lugares":1,"cad":{"c":0,"b":0,"e":0,"d":1},"h":52,"w":52},{"id":"x20-i0jw1","label":"203","tipo":"quadrada","x":880,"y":875,"rot":0,"esc":1,"lugares":1,"cad":{"c":0,"b":0,"e":0,"d":1},"h":52,"w":52},{"id":"x21-x61zz","label":"207","tipo":"quadrada","x":1105,"y":1070,"rot":0,"esc":1,"lugares":1,"cad":{"c":0,"b":0,"e":1,"d":0},"h":52,"w":52},{"id":"x22-vjsus","label":"207","tipo":"quadrada","x":1105,"y":1015,"rot":0,"esc":1,"lugares":1,"cad":{"c":0,"b":0,"e":1,"d":0},"h":52,"w":52},{"id":"x23-jzlg9","label":"209","tipo":"quadrada","x":1105,"y":930,"rot":0,"esc":1,"lugares":1,"cad":{"c":0,"b":0,"e":1,"d":0},"h":52,"w":52},{"id":"x25-2sen7","label":"209","tipo":"quadrada","x":1105,"y":875,"rot":0,"esc":1,"lugares":1,"cad":{"c":0,"b":0,"e":1,"d":0},"h":52,"w":52},{"id":"x26-7j5z3","label":"211","tipo":"quadrada","x":1105,"y":795,"rot":0,"esc":1,"lugares":1,"cad":{"c":0,"b":0,"e":1,"d":0},"h":52,"w":52},{"id":"x27-oljn6","label":"211","tipo":"quadrada","x":1105,"y":740,"rot":0,"esc":1,"lugares":1,"cad":{"c":0,"b":0,"e":1,"d":0},"h":52,"w":52},{"id":"x29-kcalq","label":"40","tipo":"sofa2","x":460,"y":905,"rot":270,"esc":1,"lugares":5,"w":505,"h":130},{"id":"x30-d3v97","label":"101","tipo":"quadrada","x":480,"y":1070,"rot":0,"esc":1,"lugares":1,"cad":{"c":0,"b":0,"e":0,"d":1},"h":52,"w":52},{"id":"x31-l2f30","label":"101","tipo":"quadrada","x":480,"y":1015,"rot":0,"esc":1,"lugares":1,"cad":{"c":0,"b":0,"e":0,"d":1},"h":52,"w":52},{"id":"x32-lv07n","label":"103","tipo":"quadrada","x":480,"y":935,"rot":0,"esc":1,"lugares":1,"cad":{"c":0,"b":0,"e":0,"d":1},"h":52,"w":52},{"id":"x33-9qqs2","label":"103","tipo":"quadrada","x":480,"y":880,"rot":0,"esc":1,"lugares":1,"cad":{"c":0,"b":0,"e":0,"d":1},"h":52,"w":52},{"id":"x34-jrj5b","label":"105","tipo":"quadrada","x":480,"y":795,"rot":0,"esc":1,"lugares":1,"cad":{"c":0,"b":0,"e":0,"d":1},"h":52,"w":52},{"id":"x35-k7p65","label":"105","tipo":"quadrada","x":480,"y":740,"rot":0,"esc":1,"lugares":1,"cad":{"c":0,"b":0,"e":0,"d":1},"h":52,"w":52},{"id":"x38-hw0u0","label":"301","tipo":"quadrada","x":390,"y":465,"rot":45,"esc":1,"lugares":4,"cad":{"c":1,"b":1,"e":1,"d":1},"w":82,"h":82},{"id":"x39-igrhc","label":"302","tipo":"quadrada","x":540,"y":465,"rot":45,"esc":1,"lugares":4,"cad":{"c":1,"b":1,"e":1,"d":1},"w":82,"h":82},{"id":"x40-ode1g","label":"303","tipo":"quadrada","x":690,"y":465,"rot":45,"esc":1,"lugares":4,"cad":{"c":1,"b":1,"e":1,"d":1},"w":82,"h":82},{"id":"x41-q4td6","label":"304","tipo":"quadrada","x":835,"y":465,"rot":45,"esc":1,"lugares":4,"cad":{"c":1,"b":1,"e":1,"d":1},"w":82,"h":82},{"id":"x42-rmfiu","label":"305","tipo":"quadrada","x":985,"y":465,"rot":45,"esc":1,"lugares":4,"cad":{"c":1,"b":1,"e":1,"d":1},"w":82,"h":82},{"id":"x43-6uiws","label":"306","tipo":"quadrada","x":1135,"y":460,"rot":45,"esc":1,"lugares":4,"cad":{"c":1,"b":1,"e":1,"d":1},"w":82,"h":82},{"id":"x44-q20a1","label":"401","tipo":"retangular","x":95,"y":200,"rot":90,"esc":1,"lugares":7,"h":68,"w":162,"cad":{"c":2,"b":3,"e":1,"d":1}},{"id":"x45-lfjti","label":"403","tipo":"quadrada","x":215,"y":45,"rot":0,"esc":1,"lugares":2,"cad":{"c":0,"b":0,"e":1,"d":1},"h":52,"w":52},{"id":"x46-5fpse","label":"404","tipo":"quadrada","x":270,"y":180,"rot":0,"esc":1,"lugares":0,"w":82,"h":112,"cad":{"c":0,"b":0,"e":0,"d":0}},{"id":"x47-w2ztm","label":"105","tipo":"quadrada","x":340,"y":150,"rot":0,"esc":1,"lugares":1,"cad":{"c":0,"b":0,"e":0,"d":1},"h":52,"w":52},{"id":"x48-jiph8","label":"105","tipo":"quadrada","x":340,"y":205,"rot":0,"esc":1,"lugares":1,"cad":{"c":0,"b":0,"e":0,"d":1},"h":52,"w":52},{"id":"x49-bdjwn","label":"405","tipo":"oval","x":380,"y":45,"rot":90,"esc":1,"lugares":2,"h":94,"w":68},{"id":"x50-ujjh9","label":"406","tipo":"oval","x":380,"y":315,"rot":0,"esc":1,"lugares":4},{"id":"x51-w9994","label":"501","tipo":"oval","x":555,"y":320,"rot":0,"esc":1,"lugares":4},{"id":"x52-ppt37","label":"504","tipo":"oval","x":570,"y":55,"rot":0,"esc":1,"lugares":4},{"id":"x53-j84wf","label":"502","tipo":"quadrada","x":540,"y":185,"rot":45,"esc":1,"lugares":4,"cad":{"c":1,"b":1,"e":1,"d":1},"w":82,"h":82},{"id":"x54-eu5ar","label":"506","tipo":"quadrada","x":790,"y":315,"rot":0,"esc":1,"lugares":2,"cad":{"c":0,"b":0,"e":1,"d":1},"h":52,"w":52},{"id":"x55-5ejhq","label":"105","tipo":"quadrada","x":800,"y":50,"rot":0,"esc":1,"lugares":2,"cad":{"c":0,"b":0,"e":1,"d":1},"h":52,"w":52},{"id":"x56-do3f1","label":"505","tipo":"quadrada","x":755,"y":180,"rot":45,"esc":1,"lugares":4,"cad":{"c":1,"b":1,"e":1,"d":1},"w":82,"h":82},{"id":"x57-dxa6h","label":"604","tipo":"quadrada","x":1015,"y":175,"rot":45,"esc":1,"lugares":4,"cad":{"c":1,"b":1,"e":1,"d":1},"w":82,"h":82},{"id":"x58-335g5","label":"602","tipo":"oval","x":950,"y":65,"rot":0,"esc":1,"lugares":4},{"id":"x59-9ivcs","label":"601","tipo":"oval","x":970,"y":295,"rot":0,"esc":1,"lugares":4},{"id":"x60-xiwr1","label":"603","tipo":"quadrada","x":1095,"y":45,"rot":0,"esc":1,"lugares":2,"cad":{"c":0,"b":0,"e":1,"d":1},"h":52,"w":52},{"id":"x61-gikp3","label":"605","tipo":"quadrada","x":1125,"y":305,"rot":0,"esc":1,"lugares":2,"cad":{"c":0,"b":0,"e":1,"d":1},"h":52,"w":52},{"id":"x64-t9aye","label":"402","tipo":"quadrada","x":195,"y":335,"rot":0,"esc":1,"lugares":2,"cad":{"c":0,"b":0,"e":1,"d":1},"h":52,"w":52},{"id":"x65-4t27d","label":"606","tipo":"retangular","x":1210,"y":175,"rot":90,"esc":1,"lugares":7,"h":68,"w":162,"cad":{"c":2,"b":3,"e":1,"d":1}}]};
+/* estados dessa noite de sábado (91% de ocupação) */
+const NOITE_LIVRES = ['403', '603', '605', '107', '209', '404'];
+const NOITE_RESERVADAS = ['604', '305', '2'];
+function estadoNoite(m) {
+  if (P_DECOR[m.tipo]) return undefined;
+  if (m.id === 'm1c') return 'reservada';
+  if (NOITE_RESERVADAS.indexOf(m.label) >= 0) return 'reservada';
+  if (NOITE_LIVRES.indexOf(m.label) >= 0) return 'livre';
+  return 'ocupada';
+}
+const PLANTA = {
+  clube: {w: REAL.clube.largura, h: REAL.clube.altura},
+  zonas: REAL.zonas,
+  mesas: REAL.mesas.map(m => ({l: m.label, t: m.tipo, x: m.x, y: m.y, r: m.rot, w: m.w, h: m.h, cad: m.cad, lug: m.lugares, e: estadoNoite(m)})),
+};
+const PLANTA_ANTIGA = {
+  clube: {w: 1200, h: 1180},
+  zonas: [
+    {nome: 'VIP Room 2', x: 10, y: 390, w: 185, h: 315},
+    {nome: 'VIP Room 1', x: 15, y: 710, w: 180, h: 435},
+    {nome: '300', x: 315, y: 390, w: 875, h: 145},
+    {nome: 'Sunset', x: 5, y: 10, w: 1180, h: 370},
+  ],
+  mesas: [
+    {l: '401', t: 'retangular', x: 115, y: 190, r: 90, lug: 6, cad: {c: 2, b: 2, e: 1, d: 1}, e: 'ocupada'},
+    {l: '403', t: 'quadrada', x: 235, y: 75, lug: 4, cad: {c: 1, b: 1, e: 1, d: 1}, e: 'livre'},
+    {l: '405', t: 'oval', x: 390, y: 75, lug: 4, e: 'ocupada'},
+    {l: '404', t: 'quadrada', x: 320, y: 195, w: 56, h: 74, lug: 6, cad: {c: 1, b: 1, e: 2, d: 2}, e: 'reservada'},
+    {l: '105', t: 'quadrada', x: 402, y: 162, w: 34, h: 30, lug: 2, cad: {d: 2}, e: 'ocupada'},
+    {l: '105', t: 'quadrada', x: 402, y: 208, w: 34, h: 30, lug: 2, cad: {d: 2}, e: 'ocupada'},
+    {l: '402', t: 'quadrada', x: 255, y: 320, lug: 4, cad: {c: 1, b: 1, e: 1, d: 1}, e: 'ocupada'},
+    {l: '406', t: 'oval', x: 425, y: 320, lug: 4, e: 'ocupada'},
+    {l: '504', t: 'oval', x: 585, y: 75, lug: 4, e: 'ocupada'},
+    {l: '502', t: 'quadrada', x: 570, y: 195, r: 45, w: 90, h: 75, lug: 6, cad: {c: 1, b: 1, e: 2, d: 2}, e: 'ocupada'},
+    {l: '501', t: 'oval', x: 615, y: 320, lug: 4, e: 'ocupada'},
+    {l: '505', t: 'quadrada', x: 795, y: 190, r: 45, w: 90, h: 75, lug: 6, cad: {c: 1, b: 1, e: 2, d: 2}, e: 'ocupada'},
+    {l: '105', t: 'quadrada', x: 765, y: 70, lug: 4, cad: {c: 1, b: 1, e: 1, d: 1}, e: 'ocupada'},
+    {l: '506', t: 'quadrada', x: 785, y: 320, lug: 4, cad: {c: 1, b: 1, e: 1, d: 1}, e: 'ocupada'},
+    {l: '602', t: 'oval', x: 935, y: 75, lug: 4, e: 'ocupada'},
+    {l: '603', t: 'quadrada', x: 1120, y: 75, lug: 4, cad: {c: 1, b: 1, e: 1, d: 1}, e: 'livre'},
+    {l: '604', t: 'quadrada', x: 1060, y: 200, r: 45, w: 90, h: 75, lug: 6, cad: {c: 1, b: 1, e: 2, d: 2}, e: 'reservada'},
+    {l: '601', t: 'oval', x: 945, y: 320, lug: 4, e: 'ocupada'},
+    {l: '605', t: 'quadrada', x: 1125, y: 330, lug: 4, cad: {c: 1, b: 1, e: 1, d: 1}, e: 'livre'},
+    {l: '606', t: 'quadrada', x: 1160, y: 195, w: 58, h: 118, lug: 6, cad: {c: 1, b: 1, e: 2, d: 2}, e: 'ocupada'},
+    {l: '301', t: 'quadrada', x: 455, y: 470, r: 45, lug: 4, cad: {c: 1, b: 1, e: 1, d: 1}, e: 'ocupada'},
+    {l: '302', t: 'quadrada', x: 585, y: 470, r: 45, lug: 4, cad: {c: 1, b: 1, e: 1, d: 1}, e: 'ocupada'},
+    {l: '303', t: 'quadrada', x: 715, y: 470, r: 45, lug: 4, cad: {c: 1, b: 1, e: 1, d: 1}, e: 'ocupada'},
+    {l: '304', t: 'quadrada', x: 850, y: 470, r: 45, lug: 4, cad: {c: 1, b: 1, e: 1, d: 1}, e: 'ocupada'},
+    {l: '305', t: 'quadrada', x: 980, y: 470, r: 45, lug: 4, cad: {c: 1, b: 1, e: 1, d: 1}, e: 'reservada'},
+    {l: '306', t: 'quadrada', x: 1110, y: 470, r: 45, lug: 4, cad: {c: 1, b: 1, e: 1, d: 1}, e: 'ocupada'},
+    {l: '2', t: 'quadrada', x: 100, y: 540, w: 60, h: 155, lug: 10, cad: {c: 1, b: 1, e: 4, d: 4}, e: 'reservada'},
+    {l: '1', t: 'quadrada', x: 100, y: 925, w: 70, h: 220, lug: 12, cad: {c: 1, b: 1, e: 5, d: 5}, e: 'ocupada'},
+    {l: 'DJ', t: 'dj', x: 790, y: 595, r: 180, w: 150, h: 65},
+    {l: 'Luz', t: 'luz', x: 410, y: 585},
+    {l: 'Luz', t: 'luz', x: 1105, y: 540, w: 34, h: 40},
+    {l: 'Luz', t: 'luz', x: 350, y: 765, w: 34, h: 34},
+    {l: '', t: 'sofa2', x: 490, y: 905, r: 270, w: 505, h: 130, lug: 5, e: 'ocupada'},
+    {l: '', t: 'sofa2', x: 725, y: 905, r: 90, w: 505, h: 130, lug: 5, e: 'ocupada'},
+    {l: '', t: 'sofa2', x: 860, y: 905, r: 270, w: 505, h: 130, lug: 5, e: 'reservada'},
+    {l: '', t: 'sofa2', x: 1120, y: 905, r: 90, w: 505, h: 130, lug: 5, e: 'ocupada'},
+    {l: '105', t: 'quadrada', x: 525, y: 752, w: 55, h: 48, lug: 2, cad: {d: 2}, e: 'ocupada'},
+    {l: '105', t: 'quadrada', x: 525, y: 812, w: 55, h: 48, lug: 2, cad: {d: 2}, e: 'ocupada'},
+    {l: '103', t: 'quadrada', x: 525, y: 902, w: 55, h: 48, lug: 2, cad: {d: 2}, e: 'ocupada'},
+    {l: '103', t: 'quadrada', x: 525, y: 962, w: 55, h: 48, lug: 2, cad: {d: 2}, e: 'ocupada'},
+    {l: '101', t: 'quadrada', x: 525, y: 1030, w: 55, h: 48, lug: 2, cad: {d: 2}, e: 'ocupada'},
+    {l: '101', t: 'quadrada', x: 525, y: 1090, w: 55, h: 48, lug: 2, cad: {d: 2}, e: 'ocupada'},
+    {l: '111', t: 'quadrada', x: 690, y: 752, w: 55, h: 48, lug: 2, cad: {e: 2}, e: 'ocupada'},
+    {l: '111', t: 'quadrada', x: 690, y: 812, w: 55, h: 48, lug: 2, cad: {e: 2}, e: 'ocupada'},
+    {l: '109', t: 'quadrada', x: 690, y: 902, w: 55, h: 48, lug: 2, cad: {e: 2}, e: 'ocupada'},
+    {l: '109', t: 'quadrada', x: 690, y: 962, w: 55, h: 48, lug: 2, cad: {e: 2}, e: 'ocupada'},
+    {l: '107', t: 'quadrada', x: 690, y: 1030, w: 55, h: 48, lug: 2, cad: {e: 2}, e: 'livre'},
+    {l: '107', t: 'quadrada', x: 690, y: 1090, w: 55, h: 48, lug: 2, cad: {e: 2}, e: 'livre'},
+    {l: '205', t: 'quadrada', x: 900, y: 752, w: 55, h: 48, lug: 2, cad: {d: 2}, e: 'ocupada'},
+    {l: '205', t: 'quadrada', x: 900, y: 812, w: 55, h: 48, lug: 2, cad: {d: 2}, e: 'ocupada'},
+    {l: '203', t: 'quadrada', x: 900, y: 902, w: 55, h: 48, lug: 2, cad: {d: 2}, e: 'ocupada'},
+    {l: '203', t: 'quadrada', x: 900, y: 962, w: 55, h: 48, lug: 2, cad: {d: 2}, e: 'ocupada'},
+    {l: '201', t: 'quadrada', x: 900, y: 1030, w: 55, h: 48, lug: 2, cad: {d: 2}, e: 'ocupada'},
+    {l: '201', t: 'quadrada', x: 900, y: 1090, w: 55, h: 48, lug: 2, cad: {d: 2}, e: 'ocupada'},
+    {l: '211', t: 'quadrada', x: 1080, y: 752, w: 55, h: 48, lug: 2, cad: {e: 2}, e: 'ocupada'},
+    {l: '211', t: 'quadrada', x: 1080, y: 812, w: 55, h: 48, lug: 2, cad: {e: 2}, e: 'ocupada'},
+    {l: '209', t: 'quadrada', x: 1080, y: 902, w: 55, h: 48, lug: 2, cad: {e: 2}, e: 'livre'},
+    {l: '209', t: 'quadrada', x: 1080, y: 962, w: 55, h: 48, lug: 2, cad: {e: 2}, e: 'livre'},
+    {l: '207', t: 'quadrada', x: 1080, y: 1030, w: 55, h: 48, lug: 2, cad: {e: 2}, e: 'ocupada'},
+    {l: '207', t: 'quadrada', x: 1080, y: 1090, w: 55, h: 48, lug: 2, cad: {e: 2}, e: 'ocupada'},
+    {l: '100', t: 'texto', x: 610, y: 925, r: 270},
+    {l: '200', t: 'texto', x: 995, y: 925, r: 270},
+    {l: 'Portão', t: 'portao', x: 195, y: 545, r: 90, w: 300, h: 15},
+    {l: 'Portão', t: 'portao', x: 90, y: 10},
+    {l: 'Porta', t: 'porta', x: 210, y: 1105},
+    {l: 'Parede', t: 'parede', x: 500, y: 135, w: 10, h: 235},
+    {l: 'Parede', t: 'parede', x: 515, y: 250, r: 270, w: 10, h: 40},
+    {l: 'Parede', t: 'parede', x: 530, y: 315, w: 10, h: 130},
+    {l: 'Parede', t: 'parede', x: 865, y: 195, w: 10, h: 355},
+  ],
+};
+function svgPlanta(mesas, opts) {
+  opts = opts || {};
+  const cw = PLANTA.clube.w, ch = PLANTA.clube.h, PAD = 52;
+  let s = '<svg width="700" height="650" viewBox="' + -PAD + ' ' + -PAD + ' ' + (cw + 2 * PAD) + ' ' + (ch + 2 * PAD) + '">';
+  s += '<defs>' +
+    '<radialGradient id="p_fundo" cx="50%" cy="40%" r="80%"><stop offset="0%" stop-color="#141926"/><stop offset="100%" stop-color="#06080C"/></radialGradient>' +
+    '<radialGradient id="p_woodR" cx="35%" cy="30%" r="85%"><stop offset="0%" stop-color="#3A3F4C"/><stop offset="55%" stop-color="#23262F"/><stop offset="100%" stop-color="#181B22"/></radialGradient>' +
+    '<linearGradient id="p_woodL" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0%" stop-color="#343945"/><stop offset="100%" stop-color="#1C1F27"/></linearGradient>' +
+    '<linearGradient id="p_woodD" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#262D38"/><stop offset="100%" stop-color="#10141B"/></linearGradient>' +
+    '<linearGradient id="p_leather" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#6E1423"/><stop offset="100%" stop-color="#420C16"/></linearGradient>' +
+    '<radialGradient id="p_luzG"><stop offset="0%" stop-color="#FFC66B" stop-opacity=".5"/><stop offset="100%" stop-color="#FFC66B" stop-opacity="0"/></radialGradient>' +
+    '<radialGradient id="p_spotG"><stop offset="0%" stop-color="#FFD98A" stop-opacity=".4"/><stop offset="55%" stop-color="#FFD98A" stop-opacity=".14"/><stop offset="100%" stop-color="#FFD98A" stop-opacity="0"/></radialGradient>' +
+    '<radialGradient id="p_spotM"><stop offset="0%" stop-color="#E14ECA" stop-opacity=".42"/><stop offset="55%" stop-color="#E14ECA" stop-opacity=".15"/><stop offset="100%" stop-color="#E14ECA" stop-opacity="0"/></radialGradient>' +
+    '<radialGradient id="p_spotC"><stop offset="0%" stop-color="#3EC6E0" stop-opacity=".4"/><stop offset="55%" stop-color="#3EC6E0" stop-opacity=".14"/><stop offset="100%" stop-color="#3EC6E0" stop-opacity="0"/></radialGradient>' +
+    '<linearGradient id="p_beamM" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#E14ECA" stop-opacity=".38"/><stop offset="100%" stop-color="#E14ECA" stop-opacity="0"/></linearGradient>' +
+    '<linearGradient id="p_beamC" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3EC6E0" stop-opacity=".34"/><stop offset="100%" stop-color="#3EC6E0" stop-opacity="0"/></linearGradient>' +
+    '<radialGradient id="p_haloR"><stop offset="0%" stop-color="#E5A33C" stop-opacity=".55"/><stop offset="55%" stop-color="#E5A33C" stop-opacity=".2"/><stop offset="100%" stop-color="#E5A33C" stop-opacity="0"/></radialGradient>' +
+    '<radialGradient id="p_haloO"><stop offset="0%" stop-color="#FF5C6C" stop-opacity=".55"/><stop offset="55%" stop-color="#FF5C6C" stop-opacity=".2"/><stop offset="100%" stop-color="#FF5C6C" stop-opacity="0"/></radialGradient>' +
+    '</defs>';
+  s += '<rect x="' + -PAD + '" y="' + -PAD + '" width="' + (cw + 2 * PAD) + '" height="' + (ch + 2 * PAD) + '" fill="url(#p_fundo)"/>' +
+    '<rect x="-13" y="-8" width="' + (cw + 40) + '" height="' + (ch + 40) + '" rx="7" fill="rgba(0,0,0,.6)"/>' +
+    '<rect x="-20" y="-20" width="' + (cw + 40) + '" height="' + (ch + 40) + '" rx="6" fill="#2A303D" stroke="#414B5C" stroke-width="2"/>' +
+    '<rect x="0" y="0" width="' + cw + '" height="' + ch + '" fill="#161C26" stroke="#0C0F14" stroke-width="1.5"/>' +
+    '<rect x="4" y="4" width="' + (cw - 8) + '" height="' + (ch - 8) + '" fill="none" stroke="rgba(0,0,0,.4)" stroke-width="7"/>';
+  PLANTA.zonas.forEach(z => {
+    s += '<rect x="' + z.x + '" y="' + z.y + '" width="' + z.w + '" height="' + z.h + '" rx="8" fill="rgba(201,162,39,.05)" stroke="#39424F" stroke-width="2"/>' +
+      '<rect x="' + (z.x + 8) + '" y="' + (z.y + 8) + '" width="' + Math.max(4, z.w - 16) + '" height="' + Math.max(4, z.h - 16) + '" rx="5" fill="none" stroke="rgba(201,162,39,.16)" stroke-width="1.5"/>' +
+      '<text x="' + (z.x + 16) + '" y="' + (z.y + 27) + '" font-size="12.5" font-weight="800" letter-spacing="2.5" fill="#8F8877">' + z.nome.toUpperCase() + '</text>';
+  });
+  mesas.forEach(m => { s += pMesa(m, opts.clicavel); });
+  /* destaque de uma mesa (ex.: a mesa investigada no arquivo) */
+  const alvo = opts.destaque ? mesas.find(m => m.l === opts.destaque) : null;
+  if (alvo) {
+    const d = pDims(alvo);
+    s += '<rect x="' + (alvo.x - d.w / 2 - 22) + '" y="' + (alvo.y - d.h / 2 - 22) + '" width="' + (d.w + 44) + '" height="' + (d.h + 44) + '" rx="18" fill="none" stroke="#3EC6E0" stroke-width="5" stroke-dasharray="14 8"/>' +
+      '<text x="' + alvo.x + '" y="' + (alvo.y + d.h / 2 + 44) + '" fill="#3EC6E0" font-size="17" font-weight="800" text-anchor="middle">MESA ' + alvo.l + '</text>';
+  }
+  return s + '</svg>';
+}
+/* planta com os estados ATUAIS da demo (para o Mapa da sala) */
+function mesasComEstadoAtual() {
+  return REAL.mesas.map(m => {
+    const n = parseInt(m.label, 10);
+    const reservavel = !isNaN(n) && mesasBase().some(x => x.n === n);
+    return {l: m.label, t: m.tipo, x: m.x, y: m.y, r: m.rot, w: m.w, h: m.h, cad: m.cad, lug: m.lugares,
+      e: P_DECOR[m.tipo] ? undefined : (reservavel ? estadoMesa(n) : 'livre')};
+  });
+}
+/* planta de uma noite arquivada (estados estáveis gerados a partir da ocupação) */
+function mesasNoite(pct, semente) {
+  return REAL.mesas.map(m => {
+    let e;
+    if (!P_DECOR[m.tipo]) {
+      const h = Math.abs(Math.round(m.x * 3 + m.y * 7 + semente * 131)) % 100;
+      e = h < pct ? 'ocupada' : (h % 19 === 3 ? 'reservada' : 'livre');
+    }
+    return {l: m.label, t: m.tipo, x: m.x, y: m.y, r: m.rot, w: m.w, h: m.h, cad: m.cad, lug: m.lugares, e: e};
+  });
+}
+function mesaClicada(l) {
+  const n = parseInt(l, 10);
+  if (isNaN(n) || !mesasBase().some(x => x.n === n)) return;
+  const e = estadoMesa(n);
+  if (e === 'livre') { abrirNovaReserva(n); return; }
+  const quem = quemNaMesa(n);
+  toast('Mesa ' + n + ' — ' + (e === 'ocupada' ? 'ocupada' : 'reservada') + (quem ? ': ' + quem : ''));
+}
+function rMapa() {
+  const s = stats();
+  topbar('Mapa da sala', 'Toca numa mesa livre para reservar · sincronizado com o tablet da sala',
+    '<span class="chip" style="cursor:default"><span style="color:var(--livre)">●</span>&nbsp;' + s.livres + ' livres</span>' +
+    '<span class="chip" style="cursor:default"><span style="color:var(--res)">●</span>&nbsp;' + s.resv + ' reservadas</span>' +
+    '<span class="chip" style="cursor:default"><span style="color:var(--ocu)">●</span>&nbsp;' + s.ocup + ' ocupadas</span>' +
+    '<button class="btn gold" onclick="abrirNovaReserva()">＋ Nova reserva</button>');
+  $('body').innerHTML = '<div class="card" style="padding: 14px; display: flex; justify-content: center">' + svgPlanta(mesasComEstadoAtual(), {clicavel: true}) + '</div>';
+}
+function svgSala() { return svgPlanta(PLANTA.mesas, {destaque: '501'}); }
+function svgSalaVelha() {
+  const OC = '#FF5C6C', RE = '#E5A33C', LI = '#43C98B';
+  const lbl = (x, y, n) => '<ellipse cx="' + x + '" cy="' + y + '" rx="' + (String(n).length > 2 ? 16 : 12) + '" ry="9.5" fill="#12161E" stroke="#D9CCA9" stroke-width="1.2"/><text x="' + x + '" y="' + (y + 3.5) + '" fill="#EDE6D6" font-size="10" font-weight="800" text-anchor="middle">' + n + '</text>';
+  const sq = (x, y, w, h, n, cor) => '<rect x="' + (x - w / 2) + '" y="' + (y - h / 2) + '" width="' + w + '" height="' + h + '" rx="8" fill="#1E2530" stroke="' + cor + '" stroke-width="2.5"/>' + lbl(x, y, n);
+  const ov = (x, y, rx, ry, n, cor) => '<ellipse cx="' + x + '" cy="' + y + '" rx="' + rx + '" ry="' + ry + '" fill="#1E2530" stroke="' + cor + '" stroke-width="2.5"/>' + lbl(x, y, n);
+  const di = (x, y, s, n, cor) => '<rect x="' + (x - s / 2) + '" y="' + (y - s / 2) + '" width="' + s + '" height="' + s + '" rx="8" fill="#1E2530" stroke="' + cor + '" stroke-width="2.5" transform="rotate(45 ' + x + ' ' + y + ')"/>' + lbl(x, y, n);
+  const zona = (x, y, w, h, t) => '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="8" fill="rgba(201,162,39,.04)" stroke="#39424F" stroke-width="1.5"/><text x="' + (x + 12) + '" y="' + (y + 20) + '" fill="#8F8877" font-size="13" font-weight="800" letter-spacing="2">' + t + '</text>';
+  const sofa = x => '<rect x="' + x + '" y="470" width="88" height="345" rx="10" fill="#4A0E18" stroke="#C13B4A" stroke-width="2.5"/>';
+  const luz = (x, y, g) => '<circle cx="' + x + '" cy="' + y + '" r="30" fill="url(#' + g + ')"/><circle cx="' + x + '" cy="' + y + '" r="4" fill="#10141B" stroke="#C9A227" stroke-width="1.5"/>';
+  const colMesas = (x, nums, verdes) => nums.map((n, i) => sq(x, [535, 573, 631, 670, 726, 764][i], 34, 30, n, verdes && verdes.includes(i) ? LI : OC)).join('');
+  return '<svg width="660" height="600" viewBox="0 0 930 850">' +
+    '<defs><radialGradient id="gM"><stop offset="0%" stop-color="#E14ECA" stop-opacity=".45"/><stop offset="100%" stop-color="#E14ECA" stop-opacity="0"/></radialGradient>' +
+    '<radialGradient id="gC"><stop offset="0%" stop-color="#3EC6E0" stop-opacity=".45"/><stop offset="100%" stop-color="#3EC6E0" stop-opacity="0"/></radialGradient></defs>' +
+    '<rect x="15" y="12" width="900" height="826" rx="8" fill="#161C26" stroke="#2A3140" stroke-width="3"/>' +
+    /* portão de entrada (topo esq.) */
+    '<rect x="34" y="20" width="106" height="9" rx="3" fill="rgba(143,212,232,.3)" stroke="#5C8FA3" stroke-width="1.2"/>' +
+    /* zonas */
+    zona(25, 32, 600, 248, 'SUNSET') + zona(628, 32, 275, 248, '') +
+    zona(35, 296, 130, 212, 'VIP ROOM 2') + zona(35, 518, 130, 296, 'VIP ROOM 1') +
+    zona(235, 297, 622, 100, '300') +
+    '<text x="455" y="447" fill="#8F8877" font-size="15" font-weight="800" letter-spacing="3">LOUNGE</text>' +
+    /* paredes do sunset */
+    '<rect x="352" y="128" width="5" height="92" rx="2" fill="#414B5C"/>' +
+    /* sunset esquerda */
+    sq(175, 54, 36, 30, 403, LI) + ov(289, 52, 34, 22, 405, OC) + ov(420, 60, 34, 22, 504, OC) + sq(580, 57, 36, 30, 105, OC) +
+    sq(93, 158, 52, 112, 401, OC) + sq(212, 146, 56, 74, 404, RE) + sq(262, 126, 32, 28, 105, OC) + sq(262, 165, 32, 28, 105, OC) +
+    di(400, 150, 52, 502, OC) + di(548, 145, 52, 505, OC) +
+    sq(160, 254, 36, 30, 402, OC) + ov(289, 240, 34, 22, 406, OC) + sq(573, 240, 36, 30, 506, OC) + ov(700, 227, 34, 22, 601, OC) +
+    /* sunset direita */
+    ov(684, 67, 34, 22, 602, OC) + sq(784, 53, 36, 30, 603, LI) + di(730, 143, 52, 604, RE) + sq(861, 143, 48, 96, 606, OC) + sq(805, 234, 36, 30, 605, LI) +
+    /* mesa 501 — a mesa da investigação */
+    ov(410, 242, 34, 22, 501, OC) +
+    '<rect x="366" y="210" width="88" height="64" rx="14" fill="none" stroke="#3EC6E0" stroke-width="3.5" stroke-dasharray="9 5"/>' +
+    '<text x="410" y="292" fill="#3EC6E0" font-size="12" font-weight="800" text-anchor="middle">MESA 501</text>' +
+    /* vip rooms */
+    sq(95, 396, 46, 112, 2, RE) + '<rect x="158" y="305" width="8" height="196" rx="3" fill="rgba(143,212,232,.3)" stroke="#5C8FA3" stroke-width="1.2"/>' +
+    sq(95, 660, 46, 132, 1, OC) +
+    '<path d="M 155 806 A 44 44 0 0 1 111 806" fill="none" stroke="#5C7089" stroke-width="1.4" stroke-dasharray="4 3"/><rect x="152" y="762" width="5" height="44" rx="2" fill="#D9CCA9"/>' +
+    /* zona 300 */
+    di(295, 344, 54, 301, OC) + di(398, 344, 54, 302, OC) + di(503, 344, 54, 303, OC) + di(604, 344, 54, 304, OC) + di(707, 344, 54, 305, RE) + di(810, 344, 54, 306, OC) +
+    /* dj + luzes */
+    '<rect x="520" y="424" width="105" height="34" rx="8" fill="#10151D" stroke="#C9A227" stroke-width="1.5"/><circle cx="538" cy="441" r="7" fill="#0C0F14" stroke="#C9A227" stroke-width="1.2"/><circle cx="607" cy="441" r="7" fill="#0C0F14" stroke="#C9A227" stroke-width="1.2"/><text x="572" y="446" fill="#C9A227" font-size="11" font-weight="800" text-anchor="middle" letter-spacing="2">DJ</text>' +
+    luz(310, 427, 'gM') + luz(268, 548, 'gM') + luz(792, 407, 'gC') +
+    /* lounge: sofás + mesas */
+    sofa(300) + sofa(483) + sofa(578) + sofa(763) +
+    colMesas(358, [105, 105, 103, 103, 101, 101]) +
+    colMesas(514, [111, 111, 109, 109, 107, 107], [4, 5]) +
+    colMesas(635, [205, 205, 203, 203, 201, 201]) +
+    colMesas(791, [211, 211, 209, 209, 207, 207], [2, 3]) +
+    '<text x="435" y="650" fill="#8F8877" font-size="13" font-weight="800" letter-spacing="2" transform="rotate(90 435 650)">100</text>' +
+    '<text x="716" y="650" fill="#8F8877" font-size="13" font-weight="800" letter-spacing="2" transform="rotate(90 716 650)">200</text>' +
+    '</svg>';
+}
+
+/* ============ ações ============ */
+function marcarPago(id) {
+  const r = DB.reservas.find(x => x.id === id);
+  if (!r) return;
+  const ag = new Date();
+  r.pago = true; r.pagoAs = pad(ag.getHours()) + ':' + pad(ag.getMinutes());
+  save(); render(); toast('Pagamento registado — ' + MT(r.valor) + ' na caixa 💰');
+}
+function checkin(mesa) {
+  if (!DB.checkins.includes(mesa)) DB.checkins.push(mesa);
+  save(); render(); toast('Check-in feito — mesa ' + mesa + ' ocupada. O tablet da sala já vê. ✓');
+}
+
+/* ---------- modais ---------- */
+function fecharModal() { $('scrim').classList.remove('open'); }
+function abrirModal(html) { $('modal').innerHTML = html; $('scrim').classList.add('open'); }
+
+function abrirNovaReserva(mesaPre, telPre) {
+  const livres = mesasBase().filter(m => estadoMesa(m.n) === 'livre');
+  const cli = Object.entries(DB.clientes);
+  abrirModal('<h2>Nova reserva</h2><div class="sub">Liga a reserva à ficha do cliente — pesquisa pelo telefone.</div>' +
+    '<label>CLIENTE</label><select id="fTel">' +
+      cli.map(([tel, c]) => '<option value="' + tel + '"' + (telPre === tel ? ' selected' : '') + '>' + c.nome + ' — ' + c.tel + '</option>').join('') + '</select>' +
+    '<label>MESA (SÓ LIVRES)</label><select id="fMesa">' +
+      livres.map(m => '<option value="' + m.n + '"' + (mesaPre === m.n ? ' selected' : '') + '>Mesa ' + m.n + ' — ' + m.zona + ' · ' + m.lug + ' lug.</option>').join('') + '</select>' +
+    '<div style="display:flex;gap:10px"><div style="flex:1"><label>DATA</label><input id="fData" type="date" value="' + isoHoje + '" min="' + isoHoje + '"></div>' +
+    '<div style="flex:1"><label>HORA</label><select id="fHora">' + ['20:00','20:30','21:00','21:30','22:00','22:30','23:00','23:30'].map(h => '<option' + (h === '22:00' ? ' selected' : '') + '>' + h + '</option>').join('') + '</select></div></div>' +
+    '<div style="display:flex;gap:10px"><div style="flex:1"><label>PESSOAS</label><input id="fPax" type="number" value="4" min="1" max="20"></div>' +
+    '<div style="flex:1"><label>CONSUMO MÍNIMO (MT)</label><input id="fVal" type="number" value="10000" step="500"></div></div>' +
+    '<div style="display:flex;gap:10px;margin-top:16px"><button class="btn ghost" style="flex:1" onclick="fecharModal()">Cancelar</button>' +
+    '<button class="btn gold" style="flex:1" onclick="guardarReserva()">Guardar reserva</button></div>');
+}
+function guardarReserva() {
+  const mesa = parseInt($('fMesa').value, 10);
+  const r = {id: DB.proxId++, data: $('fData').value || isoHoje, hora: $('fHora').value, mesa: mesa, tel: $('fTel').value, pax: parseInt($('fPax').value, 10) || 2, valor: parseInt($('fVal').value, 10) || 10000, pago: false, pagoAs: ''};
+  DB.reservas.push(r);
+  save(); fecharModal(); render();
+  toast('Reserva guardada — mesa ' + mesa + ' marcada para ' + (r.data === isoHoje ? 'hoje' : dataPT(r.data).split(',')[0]) + ' às ' + r.hora + ' 🥂');
+}
+function abrirEditarCliente(tel) {
+  const c = DB.clientes[tel];
+  if (!c) return;
+  abrirModal('<h2>Editar cliente</h2><div class="sub">O telefone é o identificador da ficha — não muda. Para um número novo cria-se ficha nova (na versão completa, a mudança de número é assistida e leva o histórico junto).</div>' +
+    '<label>TELEFONE (ID)</label><input value="' + c.tel + '" disabled style="opacity:.55">' +
+    '<label>NOME COMPLETO</label><input id="eNome" value="' + c.nome.replace(/"/g, '&quot;') + '">' +
+    '<label>NOTAS</label><input id="eNotas" value="' + (c.notas || '').replace(/"/g, '&quot;') + '" placeholder="Ex.: prefere zona VIP">' +
+    '<label>ESTATUTO</label><span class="chip' + (c.vip ? ' on' : '') + '" id="eVip" onclick="this.classList.toggle(\'on\')">★ Cliente VIP</span>' +
+    '<div style="display:flex;gap:10px;margin-top:16px"><button class="btn ghost" style="flex:1" onclick="fecharModal()">Cancelar</button>' +
+    '<button class="btn gold" style="flex:1" onclick="guardarEdicaoCliente(\'' + tel + '\')">Guardar</button></div>');
+}
+function guardarEdicaoCliente(tel) {
+  const c = DB.clientes[tel];
+  if (!c) return;
+  const nome = $('eNome').value.trim();
+  if (!nome) { toast('Falta o nome do cliente'); return; }
+  c.nome = nome;
+  c.notas = $('eNotas').value.trim();
+  c.vip = $('eVip').classList.contains('on');
+  save(); fecharModal(); render();
+  toast('Ficha atualizada ✓');
+}
+function abrirNovoCliente() {
+  abrirModal('<h2>Novo cliente</h2><div class="sub">O telefone é o identificador — se já existir, a ficha abre em vez de duplicar.</div>' +
+    '<label>TELEFONE</label><input id="cTel" placeholder="84 000 0000" maxlength="12">' +
+    '<label>NOME COMPLETO</label><input id="cNome" placeholder="Ex.: Paulo Nhantumbo">' +
+    '<label>NOTAS (OPCIONAL)</label><input id="cNotas" placeholder="Ex.: prefere zona VIP">' +
+    '<div style="display:flex;gap:10px;margin-top:16px"><button class="btn ghost" style="flex:1" onclick="fecharModal()">Cancelar</button>' +
+    '<button class="btn gold" style="flex:1" onclick="guardarCliente()">Criar ficha</button></div>');
+}
+function guardarCliente() {
+  const telRaw = $('cTel').value.replace(/\D/g, '');
+  const nome = $('cNome').value.trim();
+  if (telRaw.length < 9) { toast('Telefone inválido — 9 dígitos, ex.: 84 000 0000'); return; }
+  if (!nome) { toast('Falta o nome do cliente'); return; }
+  if (DB.clientes[telRaw]) {
+    cliSel = telRaw; fecharModal(); vista = 'clientes'; render();
+    toast('Esse telefone já tem ficha — sem duplicados 😉'); return;
+  }
+  DB.clientes[telRaw] = {nome: nome, tel: telRaw.replace(/(\d{2})(\d{3})(\d{4})/, '$1 $2 $3'), vip: false, visitas: 0, ultima: '—', consumo: 0, notas: $('cNotas').value.trim()};
+  cliSel = telRaw; save(); fecharModal(); vista = 'clientes'; render();
+  toast('Ficha criada — ' + nome + ' 🎉');
+}
+
+render();
+</script>
+</body>
+</html>
